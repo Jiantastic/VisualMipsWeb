@@ -1,0 +1,21 @@
+{
+  "name": "wjwong",
+  "version": "1.0.0",
+  "description": "visualmips",
+  "main": "index.js",
+  "scripts": {
+    "build": "node ./node_modules/fable-compiler",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "wjwong",
+  "license": "ISC",
+  "devDependencies": {
+    "fable-compiler": "^0.7.48",
+    "fable-import-react": "^0.5.2"
+  },
+  "dependencies": {
+    "fable-core": "^0.7.28",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2"
+  }
+}
