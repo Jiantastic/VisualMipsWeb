@@ -171,7 +171,7 @@ and [<AllowNullLiteral>] CodeMirrorEditor =
     abstract somethingSelected: unit -> bool
     abstract setCursor: pos: CodeMirrorPosition -> unit
     abstract setSelection: start: CodeMirrorPosition * ``end``: CodeMirrorPosition -> unit
-    abstract getLine: n: float -> string
+    abstract getLine: n: int -> string
     abstract setLine: n: string * text: string -> unit
     abstract removeLine: n: float -> unit
     abstract getRange: from: CodeMirrorPosition * ``to``: CodeMirrorPosition -> string

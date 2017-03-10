@@ -1,4 +1,4 @@
-(* Setting up the React declarative UI in F#
+(* 
 
 Components involved:
 
@@ -29,6 +29,8 @@ add search cursor - http://codemirror.net/doc/manual.html#addons
 Codemirror.getline -> lex() -> parse() -> execute() -> save state in localStorage
 
 *)
+// BROWSER DOCUMENTATION -> https://github.com/fable-compiler/Fable/blob/master/src/fable/Fable.Core/Import/Fable.Import.Browser.fs
+
 module App.Main
 
 open System
@@ -56,10 +58,10 @@ module Util =
 // change this to Option a' type?
 
 // saving data format -> key : string, value : Record OR Union type
-let g arg1 arg2 = Util.save arg1 arg2
+let save arg1 arg2 = Util.save arg1 arg2
 
 // loading data format -> key : string
-let f arg1 = Util.load arg1
+let load arg1 = Util.load arg1
 
 let getById<'T when 'T :> Browser.HTMLElement> id =
     Browser.document.getElementById(id) :?> 'T
@@ -68,14 +70,14 @@ let editId = getById<Browser.HTMLTextAreaElement>("editor")
 
 let cmEditor = App.CodeMirrorImports.CodeMirror.fromTextArea(editId, initOptions)
 
-g "hello" "world"
+save "hello" "world"
 
 
 // THIS FUCKING WORKS
 // add None handler to complete match statements
 
 let getValue = 
-    let q : Option<string> = f "hello"
+    let q : Option<string> = load "hello"
     match q with 
     | Some x -> x 
 
@@ -86,8 +88,34 @@ let getValue =
 //     | Some f -> f
 //     | None -> printfn "hello world"
 
-cmEditor.setValue getValue
+let z = "MIPSY stuff in here"
 
+cmEditor.setValue z
+
+
+// TODO : algorithm to traverse code
+// go through code line by line while less than or equal to myCodeMirror.lastLine()
+// for each line, do lex(), parse(), execute() BASED ON information of previous line, then store result in HTML5 local Storage in the form where key : "line" + <current_line_number>, "value" : registerState Record type
+let mm = cmEditor.getLine 0
+
+//printfn "value of first line is %A" mm
+
+let executeButton = getById<Browser.HTMLButtonElement>("execute")
+let output = getById<Browser.HTMLDivElement>("output")
+
+let register1 = getById<Browser.HTMLElement>("mipsRegister1")
+
+// let f() = ""
+
+let showDataInHTML() = 
+    output.innerHTML <- "this is actually working!"
+    register1.innerHTML <- "12345"
+
+executeButton.addEventListener_click(fun _ -> showDataInHTML(); null)
+
+// BUTTONS
+// EXECUTE immediately executes cmEditor based on saved last line
+// STEP FORWARD/BACKWARD gets the cmEditor current line, then calls Util.load "line<either+1or-1forFORWARD/BACKWARD" 
 
 // let q = g "hello" "world"
 

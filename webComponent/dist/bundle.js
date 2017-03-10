@@ -1058,10 +1058,10 @@ var Util = function (__exports) {
 
     return __exports;
 }({});
-function g(arg1, arg2) {
+function save(arg1, arg2) {
     Util.save(arg1, arg2);
 }
-function f(arg1) {
+function load(arg1) {
     return Util.load(arg1);
 }
 function getById$$1(id) {
@@ -1069,25 +1069,44 @@ function getById$$1(id) {
 }
 var editId = getById$$1("editor");
 var cmEditor = CodeMirror.fromTextArea(editId, initOptions);
-g("hello", "world");
+save("hello", "world");
 var getValue = function () {
-    var q = f("hello");
+    var q = load("hello");
 
     if (q != null) {
         return q;
     } else {
-        throw new Error("/Users/jian/Desktop/Jian/EIE3/Spring/HLP/HLP_Project/src/webComponent/src/main.fs", 76, 10);
+        throw new Error("/Users/jian/Desktop/Jian/EIE3/Spring/HLP/HLP_Project/src/VisualMipsWeb/webComponent/src/main.fs", 81, 10);
     }
 }();
-cmEditor.setValue(getValue);
+var z = "MIPSY stuff in here";
+cmEditor.setValue(z);
+var mm = cmEditor.getLine(0);
+var executeButton = getById$$1("execute");
+var output = getById$$1("output");
+var register1 = getById$$1("mipsRegister1");
+function showDataInHTML() {
+    output.innerHTML = "this is actually working!";
+    register1.innerHTML = "12345";
+}
+executeButton.addEventListener('click', function (_arg1) {
+    showDataInHTML();
+    return null;
+});
 
 exports.Util = Util;
-exports.g = g;
-exports.f = f;
+exports.save = save;
+exports.load = load;
 exports.getById = getById$$1;
 exports.editId = editId;
 exports.cmEditor = cmEditor;
 exports.getValue = getValue;
+exports.z = z;
+exports.mm = mm;
+exports.executeButton = executeButton;
+exports.output = output;
+exports.register1 = register1;
+exports.showDataInHTML = showDataInHTML;
 
 }((this.files = this.files || {})));
 
