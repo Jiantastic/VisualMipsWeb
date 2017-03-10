@@ -103,26 +103,48 @@ let executeButton = getById<Browser.HTMLButtonElement>("execute")
 let resetButton = getById<Browser.HTMLButtonElement>("reset")
 let stepBackwardsButton = getById<Browser.HTMLButtonElement>("stepBackwards")
 let stepForwardsButton =  getById<Browser.HTMLButtonElement>("stepForwards")
-let output = getById<Browser.HTMLDivElement>("output")
-let register1 = getById<Browser.HTMLElement>("mipsRegister1")
-let register2 = getById<Browser.HTMLElement>("mipsRegister2")
-let register3 = getById<Browser.HTMLElement>("mipsRegister3")
-let register4 = getById<Browser.HTMLElement>("mipsRegister4")
-let register5 = getById<Browser.HTMLElement>("mipsRegister5")
-let register6 = getById<Browser.HTMLElement>("mipsRegister6")
-let register7 = getById<Browser.HTMLElement>("mipsRegister7")
-let register8 = getById<Browser.HTMLElement>("mipsRegister8")
-let register9 = getById<Browser.HTMLElement>("mipsRegister9")
-let register10 = getById<Browser.HTMLElement>("mipsRegister10")
-let register11 = getById<Browser.HTMLElement>("mipsRegister11")
-let register12 = getById<Browser.HTMLElement>("mipsRegister12")
+let errorLog = getById<Browser.HTMLDivElement>("errorLog")
+let HTMLRegister0 = getById<Browser.HTMLElement>("mipsRegister0")
+let HTMLRegister1 = getById<Browser.HTMLElement>("mipsRegister1")
+let HTMLRegister2 = getById<Browser.HTMLElement>("mipsRegister2")
+let HTMLRegister3 = getById<Browser.HTMLElement>("mipsRegister3")
+let HTMLRegister4 = getById<Browser.HTMLElement>("mipsRegister4")
+let HTMLRegister5 = getById<Browser.HTMLElement>("mipsRegister5")
+let HTMLRegister6 = getById<Browser.HTMLElement>("mipsRegister6")
+let HTMLRegister7 = getById<Browser.HTMLElement>("mipsRegister7")
+let HTMLRegister8 = getById<Browser.HTMLElement>("mipsRegister8")
+let HTMLRegister9 = getById<Browser.HTMLElement>("mipsRegister9")
+let HTMLRegister10 = getById<Browser.HTMLElement>("mipsRegister10")
+let HTMLRegister11 = getById<Browser.HTMLElement>("mipsRegister11")
+let HTMLRegister12 = getById<Browser.HTMLElement>("mipsRegister12")
 
 // let f() = ""
 
 let modifyRegisterInHTML (register : Fable.Import.Browser.HTMLElement) (registerValue : string) = 
     register.innerHTML <- registerValue
 
-executeButton.addEventListener_click(fun _ -> modifyRegisterInHTML register1 "101010101010101"; null)
+
+// update based on match statements, if register 1 -> ...., if register 2 -> ......
+// if match statement returns an error, show an error popup
+
+// main function : all buttonHandlers call the executeHandler(), calls lex() -> calls parse() -> calls execute()
+let executeHandler() = "0000"
+
+// executeButtonHandler calls executeHandler() starts from the first line
+let executeButtonHandler() = "0"
+// just set all registers to 0 graphically
+let resetButtonHandler() = "1"
+// checks if executeHandler() has been called considering that current CodeMirror text editor content has not change,if changed, call execute
+let stepBackwardsButtonHandler() = "2"
+// checks if executeHandler() has been called considering that current CodeMirror text editor content has not change
+let stepForwardsButtonHandler() = "3"
+
+// final result : each of these buttons will call a function like : executeButtonHandler(), resetButtonHandler(), stepBackwardsButtonHandler() and stepForwardsButtonHandler()
+executeButton.addEventListener_click(fun _ -> modifyRegisterInHTML HTMLRegister0 "101010101010101"; null)
+resetButton.addEventListener_click(fun _ -> modifyRegisterInHTML HTMLRegister1 "101010101010101"; null)
+stepBackwardsButton.addEventListener_click(fun _ -> modifyRegisterInHTML HTMLRegister2 "101010101010101"; null)
+stepForwardsButton.addEventListener_click(fun _ -> modifyRegisterInHTML HTMLRegister3 "101010101010101"; null)
+
 
 // BUTTONS
 // EXECUTE immediately executes cmEditor based on saved last line

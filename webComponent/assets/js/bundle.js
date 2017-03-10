@@ -1086,7 +1086,8 @@ var executeButton = getById("execute");
 var resetButton = getById("reset");
 var stepBackwardsButton = getById("stepBackwards");
 var stepForwardsButton = getById("stepForwards");
-var output = getById("output");
+var errorLog = getById("errorLog");
+var register0 = getById("mipsRegister0");
 var register1 = getById("mipsRegister1");
 var register2 = getById("mipsRegister2");
 var register3 = getById("mipsRegister3");
@@ -1103,7 +1104,19 @@ function modifyRegisterInHTML(register, registerValue) {
     register.innerHTML = registerValue;
 }
 executeButton.addEventListener('click', function (_arg1) {
+    modifyRegisterInHTML(register0, "101010101010101");
+    return null;
+});
+resetButton.addEventListener('click', function (_arg2) {
     modifyRegisterInHTML(register1, "101010101010101");
+    return null;
+});
+stepBackwardsButton.addEventListener('click', function (_arg3) {
+    modifyRegisterInHTML(register2, "101010101010101");
+    return null;
+});
+stepForwardsButton.addEventListener('click', function (_arg4) {
+    modifyRegisterInHTML(register3, "101010101010101");
     return null;
 });
 
@@ -1119,7 +1132,8 @@ exports.executeButton = executeButton;
 exports.resetButton = resetButton;
 exports.stepBackwardsButton = stepBackwardsButton;
 exports.stepForwardsButton = stepForwardsButton;
-exports.output = output;
+exports.errorLog = errorLog;
+exports.register0 = register0;
 exports.register1 = register1;
 exports.register2 = register2;
 exports.register3 = register3;
