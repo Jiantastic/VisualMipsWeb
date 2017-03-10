@@ -58,7 +58,11 @@ function getPropertyNames(obj) {
     return Object.getOwnPropertyNames(propertyMap);
 }
 
-
+function getRestParams(args, idx) {
+    for (var _len = args.length, restArgs = Array(_len > idx ? _len - idx : 0), _key = idx; _key < _len; _key++)
+        restArgs[_key - idx] = args[_key];
+    return restArgs;
+}
 function toString(o) {
     return o != null && typeof o.ToString == "function" ? o.ToString() : String(o);
 }
@@ -160,8 +164,37 @@ function compareRecords(x, y) {
         return 0;
     }
 }
-
-
+function equalsUnions(x, y) {
+    if (x === y) {
+        return true;
+    }
+    else if (x.Case !== y.Case) {
+        return false;
+    }
+    else {
+        for (var i = 0; i < x.Fields.length; i++) {
+            if (!equals(x.Fields[i], y.Fields[i]))
+                return false;
+        }
+        return true;
+    }
+}
+function compareUnions(x, y) {
+    if (x === y) {
+        return 0;
+    }
+    else {
+        var res = compare(x.Case, y.Case);
+        if (res !== 0)
+            return res;
+        for (var i = 0; i < x.Fields.length; i++) {
+            res = compare(x.Fields[i], y.Fields[i]);
+            if (res !== 0)
+                return res;
+        }
+        return 0;
+    }
+}
 
 
 
@@ -176,6 +209,9 @@ function create(pattern, options) {
     flags += options & 1 ? "i" : "";
     flags += options & 2 ? "m" : "";
     return new RegExp(pattern, flags);
+}
+function escape(str) {
+    return str.replace(/[\-\[\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
 var Long = (function () {
@@ -805,6 +841,35 @@ function padLeft(str, len, ch, isRight) {
     return str;
 }
 
+
+
+
+function split$$1(str, splitters, count, removeEmpty) {
+    count = typeof count == "number" ? count : null;
+    removeEmpty = typeof removeEmpty == "number" ? removeEmpty : null;
+    if (count < 0)
+        throw new Error("Count cannot be less than zero");
+    if (count === 0)
+        return [];
+    splitters = Array.isArray(splitters) ? splitters : getRestParams(arguments, 1);
+    splitters = splitters.map(function (x) { return escape(x); });
+    splitters = splitters.length > 0 ? splitters : [" "];
+    var m;
+    var i = 0;
+    var splits = [];
+    var reg = new RegExp(splitters.join("|"), "g");
+    while ((count == null || count > 1) && (m = reg.exec(str)) !== null) {
+        if (!removeEmpty || (m.index - i) > 0) {
+            count = count != null ? count - 1 : count;
+            splits.push(str.substring(i, m.index));
+        }
+        i = reg.lastIndex;
+    }
+    if (!removeEmpty || (str.length - i) > 0)
+        splits.push(str.substring(i));
+    return splits;
+}
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1044,6 +1109,1249 @@ function getById(id) {
     return document.getElementById(id);
 }
 
+function tokenise(s) {
+    return split$$1(s, " ", ",", "\t", "\n", "\r", "\f").filter(function () {
+        var x = "";
+        return function (y) {
+            return x !== y;
+        };
+    }());
+}
+
+function ofArray(args, base) {
+    var acc = base || new List();
+    for (var i = args.length - 1; i >= 0; i--) {
+        acc = new List(args[i], acc);
+    }
+    return acc;
+}
+var List = (function () {
+    function List(head, tail) {
+        this.head = head;
+        this.tail = tail;
+    }
+    List.prototype.ToString = function () {
+        return "[" + Array.from(this).map(toString).join("; ") + "]";
+    };
+    List.prototype.Equals = function (x) {
+        if (this === x) {
+            return true;
+        }
+        else {
+            var iter1 = this[Symbol.iterator](), iter2 = x[Symbol.iterator]();
+            for (;;) {
+                var cur1 = iter1.next(), cur2 = iter2.next();
+                if (cur1.done)
+                    return cur2.done ? true : false;
+                else if (cur2.done)
+                    return false;
+                else if (!equals(cur1.value, cur2.value))
+                    return false;
+            }
+        }
+    };
+    List.prototype.CompareTo = function (x) {
+        if (this === x) {
+            return 0;
+        }
+        else {
+            var acc = 0;
+            var iter1 = this[Symbol.iterator](), iter2 = x[Symbol.iterator]();
+            for (;;) {
+                var cur1 = iter1.next(), cur2 = iter2.next();
+                if (cur1.done)
+                    return cur2.done ? acc : -1;
+                else if (cur2.done)
+                    return 1;
+                else {
+                    acc = compare(cur1.value, cur2.value);
+                    if (acc != 0)
+                        return acc;
+                }
+            }
+        }
+    };
+    Object.defineProperty(List.prototype, "length", {
+        get: function () {
+            var cur = this, acc = 0;
+            while (cur.tail != null) {
+                cur = cur.tail;
+                acc++;
+            }
+            return acc;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    List.prototype[Symbol.iterator] = function () {
+        var cur = this;
+        return {
+            next: function () {
+                var tmp = cur;
+                cur = cur.tail;
+                return { done: tmp.tail == null, value: tmp.head };
+            }
+        };
+    };
+    List.prototype[_Symbol.reflection] = function () {
+        return {
+            type: "Microsoft.FSharp.Collections.FSharpList",
+            interfaces: ["System.IEquatable", "System.IComparable"]
+        };
+    };
+    return List;
+}());
+
+var GenericComparer = (function () {
+    function GenericComparer(f) {
+        this.Compare = f || compare;
+    }
+    GenericComparer.prototype[_Symbol.reflection] = function () {
+        return { interfaces: ["System.IComparer"] };
+    };
+    return GenericComparer;
+}());
+
+var Enumerator = (function () {
+    function Enumerator(iter) {
+        this.iter = iter;
+    }
+    Enumerator.prototype.MoveNext = function () {
+        var cur = this.iter.next();
+        this.current = cur.value;
+        return !cur.done;
+    };
+    Object.defineProperty(Enumerator.prototype, "Current", {
+        get: function () {
+            return this.current;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Enumerator.prototype.Reset = function () {
+        throw new Error("JS iterators cannot be reset");
+    };
+    Enumerator.prototype.Dispose = function () { };
+    return Enumerator;
+}());
+
+
+
+
+
+
+
+
+
+
+
+function compareWith(f, xs, ys) {
+    var nonZero = tryFind$1(function (i) { return i != 0; }, map2(function (x, y) { return f(x, y); }, xs, ys));
+    return nonZero != null ? nonZero : count(xs) - count(ys);
+}
+function delay(f) {
+    return _a = {},
+        _a[Symbol.iterator] = function () { return f()[Symbol.iterator](); },
+        _a;
+    var _a;
+}
+
+
+
+
+
+
+
+
+
+
+function fold$1(f, acc, xs) {
+    if (Array.isArray(xs) || ArrayBuffer.isView(xs)) {
+        return xs.reduce(f, acc);
+    }
+    else {
+        var cur = void 0;
+        for (var i = 0, iter = xs[Symbol.iterator]();; i++) {
+            cur = iter.next();
+            if (cur.done)
+                break;
+            acc = f(acc, cur.value, i);
+        }
+        return acc;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function count(xs) {
+    return Array.isArray(xs) || ArrayBuffer.isView(xs)
+        ? xs.length
+        : fold$1(function (acc, x) { return acc + 1; }, 0, xs);
+}
+function map$1(f, xs) {
+    return delay(function () { return unfold(function (iter) {
+        var cur = iter.next();
+        return !cur.done ? [f(cur.value), iter] : null;
+    }, xs[Symbol.iterator]()); });
+}
+
+function map2(f, xs, ys) {
+    return delay(function () {
+        var iter1 = xs[Symbol.iterator]();
+        var iter2 = ys[Symbol.iterator]();
+        return unfold(function () {
+            var cur1 = iter1.next(), cur2 = iter2.next();
+            return !cur1.done && !cur2.done ? [f(cur1.value, cur2.value), null] : null;
+        });
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function tryFind$1(f, xs, defaultValue) {
+    for (var i = 0, iter = xs[Symbol.iterator]();; i++) {
+        var cur = iter.next();
+        if (cur.done)
+            return defaultValue === void 0 ? null : defaultValue;
+        if (f(cur.value, i))
+            return cur.value;
+    }
+}
+
+
+
+
+
+
+
+
+
+function unfold(f, acc) {
+    return _a = {},
+        _a[Symbol.iterator] = function () {
+            return {
+                next: function () {
+                    var res = f(acc);
+                    if (res != null) {
+                        acc = res[1];
+                        return { done: false, value: res[0] };
+                    }
+                    return { done: true };
+                }
+            };
+        },
+        _a;
+    var _a;
+}
+
+var MapTree = (function () {
+    function MapTree(caseName, fields) {
+        this.Case = caseName;
+        this.Fields = fields;
+    }
+    return MapTree;
+}());
+function tree_sizeAux(acc, m) {
+    return m.Case === "MapOne"
+        ? acc + 1
+        : m.Case === "MapNode"
+            ? tree_sizeAux(tree_sizeAux(acc + 1, m.Fields[2]), m.Fields[3])
+            : acc;
+}
+function tree_size(x) {
+    return tree_sizeAux(0, x);
+}
+function tree_empty() {
+    return new MapTree("MapEmpty", []);
+}
+function tree_height(_arg1) {
+    return _arg1.Case === "MapOne" ? 1 : _arg1.Case === "MapNode" ? _arg1.Fields[4] : 0;
+}
+function tree_mk(l, k, v, r) {
+    var matchValue = [l, r];
+    var $target1 = function () {
+        var hl = tree_height(l);
+        var hr = tree_height(r);
+        var m = hl < hr ? hr : hl;
+        return new MapTree("MapNode", [k, v, l, r, m + 1]);
+    };
+    if (matchValue[0].Case === "MapEmpty") {
+        if (matchValue[1].Case === "MapEmpty") {
+            return new MapTree("MapOne", [k, v]);
+        }
+        else {
+            return $target1();
+        }
+    }
+    else {
+        return $target1();
+    }
+}
+
+function tree_rebalance(t1, k, v, t2) {
+    var t1h = tree_height(t1);
+    var t2h = tree_height(t2);
+    if (t2h > t1h + 2) {
+        if (t2.Case === "MapNode") {
+            if (tree_height(t2.Fields[2]) > t1h + 1) {
+                if (t2.Fields[2].Case === "MapNode") {
+                    return tree_mk(tree_mk(t1, k, v, t2.Fields[2].Fields[2]), t2.Fields[2].Fields[0], t2.Fields[2].Fields[1], tree_mk(t2.Fields[2].Fields[3], t2.Fields[0], t2.Fields[1], t2.Fields[3]));
+                }
+                else {
+                    throw new Error("rebalance");
+                }
+            }
+            else {
+                return tree_mk(tree_mk(t1, k, v, t2.Fields[2]), t2.Fields[0], t2.Fields[1], t2.Fields[3]);
+            }
+        }
+        else {
+            throw new Error("rebalance");
+        }
+    }
+    else {
+        if (t1h > t2h + 2) {
+            if (t1.Case === "MapNode") {
+                if (tree_height(t1.Fields[3]) > t2h + 1) {
+                    if (t1.Fields[3].Case === "MapNode") {
+                        return tree_mk(tree_mk(t1.Fields[2], t1.Fields[0], t1.Fields[1], t1.Fields[3].Fields[2]), t1.Fields[3].Fields[0], t1.Fields[3].Fields[1], tree_mk(t1.Fields[3].Fields[3], k, v, t2));
+                    }
+                    else {
+                        throw new Error("rebalance");
+                    }
+                }
+                else {
+                    return tree_mk(t1.Fields[2], t1.Fields[0], t1.Fields[1], tree_mk(t1.Fields[3], k, v, t2));
+                }
+            }
+            else {
+                throw new Error("rebalance");
+            }
+        }
+        else {
+            return tree_mk(t1, k, v, t2);
+        }
+    }
+}
+function tree_add(comparer, k, v, m) {
+    if (m.Case === "MapOne") {
+        var c = comparer.Compare(k, m.Fields[0]);
+        if (c < 0) {
+            return new MapTree("MapNode", [k, v, new MapTree("MapEmpty", []), m, 2]);
+        }
+        else if (c === 0) {
+            return new MapTree("MapOne", [k, v]);
+        }
+        return new MapTree("MapNode", [k, v, m, new MapTree("MapEmpty", []), 2]);
+    }
+    else if (m.Case === "MapNode") {
+        var c = comparer.Compare(k, m.Fields[0]);
+        if (c < 0) {
+            return tree_rebalance(tree_add(comparer, k, v, m.Fields[2]), m.Fields[0], m.Fields[1], m.Fields[3]);
+        }
+        else if (c === 0) {
+            return new MapTree("MapNode", [k, v, m.Fields[2], m.Fields[3], m.Fields[4]]);
+        }
+        return tree_rebalance(m.Fields[2], m.Fields[0], m.Fields[1], tree_add(comparer, k, v, m.Fields[3]));
+    }
+    return new MapTree("MapOne", [k, v]);
+}
+function tree_find(comparer, k, m) {
+    var res = tree_tryFind(comparer, k, m);
+    if (res != null)
+        return res;
+    throw new Error("key not found");
+}
+function tree_tryFind(comparer, k, m) {
+    if (m.Case === "MapOne") {
+        var c = comparer.Compare(k, m.Fields[0]);
+        return c === 0 ? m.Fields[1] : null;
+    }
+    else if (m.Case === "MapNode") {
+        var c = comparer.Compare(k, m.Fields[0]);
+        if (c < 0) {
+            return tree_tryFind(comparer, k, m.Fields[2]);
+        }
+        else {
+            if (c === 0) {
+                return m.Fields[1];
+            }
+            else {
+                return tree_tryFind(comparer, k, m.Fields[3]);
+            }
+        }
+    }
+    return null;
+}
+function tree_mem(comparer, k, m) {
+    if (m.Case === "MapOne") {
+        return comparer.Compare(k, m.Fields[0]) === 0;
+    }
+    else if (m.Case === "MapNode") {
+        var c = comparer.Compare(k, m.Fields[0]);
+        if (c < 0) {
+            return tree_mem(comparer, k, m.Fields[2]);
+        }
+        else {
+            if (c === 0) {
+                return true;
+            }
+            else {
+                return tree_mem(comparer, k, m.Fields[3]);
+            }
+        }
+    }
+    else {
+        return false;
+    }
+}
+function tree_mkFromEnumerator(comparer, acc, e) {
+    var cur = e.next();
+    while (!cur.done) {
+        acc = tree_add(comparer, cur.value[0], cur.value[1], acc);
+        cur = e.next();
+    }
+    return acc;
+}
+function tree_ofSeq(comparer, c) {
+    var ie = c[Symbol.iterator]();
+    return tree_mkFromEnumerator(comparer, tree_empty(), ie);
+}
+function tree_collapseLHS(stack) {
+    if (stack.tail != null) {
+        if (stack.head.Case === "MapOne") {
+            return stack;
+        }
+        else if (stack.head.Case === "MapNode") {
+            return tree_collapseLHS(ofArray([
+                stack.head.Fields[2],
+                new MapTree("MapOne", [stack.head.Fields[0], stack.head.Fields[1]]),
+                stack.head.Fields[3]
+            ], stack.tail));
+        }
+        else {
+            return tree_collapseLHS(stack.tail);
+        }
+    }
+    else {
+        return new List();
+    }
+}
+function tree_mkIterator(s) {
+    return { stack: tree_collapseLHS(new List(s, new List())), started: false };
+}
+function tree_moveNext(i) {
+    function current(i) {
+        if (i.stack.tail == null) {
+            return null;
+        }
+        else if (i.stack.head.Case === "MapOne") {
+            return [i.stack.head.Fields[0], i.stack.head.Fields[1]];
+        }
+        throw new Error("Please report error: Map iterator, unexpected stack for current");
+    }
+    if (i.started) {
+        if (i.stack.tail == null) {
+            return { done: true, value: null };
+        }
+        else {
+            if (i.stack.head.Case === "MapOne") {
+                i.stack = tree_collapseLHS(i.stack.tail);
+                return {
+                    done: i.stack.tail == null,
+                    value: current(i)
+                };
+            }
+            else {
+                throw new Error("Please report error: Map iterator, unexpected stack for moveNext");
+            }
+        }
+    }
+    else {
+        i.started = true;
+        return {
+            done: i.stack.tail == null,
+            value: current(i)
+        };
+    }
+    
+}
+var FableMap = (function () {
+    function FableMap() {
+    }
+    FableMap.prototype.ToString = function () {
+        return "map [" + Array.from(this).map(toString).join("; ") + "]";
+    };
+    FableMap.prototype.Equals = function (m2) {
+        return this.CompareTo(m2) === 0;
+    };
+    FableMap.prototype.CompareTo = function (m2) {
+        var _this = this;
+        return this === m2 ? 0 : compareWith(function (kvp1, kvp2) {
+            var c = _this.comparer.Compare(kvp1[0], kvp2[0]);
+            return c !== 0 ? c : compare(kvp1[1], kvp2[1]);
+        }, this, m2);
+    };
+    FableMap.prototype[Symbol.iterator] = function () {
+        var i = tree_mkIterator(this.tree);
+        return {
+            next: function () { return tree_moveNext(i); }
+        };
+    };
+    FableMap.prototype.entries = function () {
+        return this[Symbol.iterator]();
+    };
+    FableMap.prototype.keys = function () {
+        return map$1(function (kv) { return kv[0]; }, this);
+    };
+    FableMap.prototype.values = function () {
+        return map$1(function (kv) { return kv[1]; }, this);
+    };
+    FableMap.prototype.get = function (k) {
+        return tree_find(this.comparer, k, this.tree);
+    };
+    FableMap.prototype.has = function (k) {
+        return tree_mem(this.comparer, k, this.tree);
+    };
+    FableMap.prototype.set = function (k, v) {
+        throw new Error("not supported");
+    };
+    FableMap.prototype.delete = function (k) {
+        throw new Error("not supported");
+    };
+    FableMap.prototype.clear = function () {
+        throw new Error("not supported");
+    };
+    Object.defineProperty(FableMap.prototype, "size", {
+        get: function () {
+            return tree_size(this.tree);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    FableMap.prototype[_Symbol.reflection] = function () {
+        return {
+            type: "Microsoft.FSharp.Collections.FSharpMap",
+            interfaces: ["System.IEquatable", "System.IComparable", "System.Collections.Generic.IDictionary"]
+        };
+    };
+    return FableMap;
+}());
+function from(comparer, tree) {
+    var map$$1 = new FableMap();
+    map$$1.tree = tree;
+    map$$1.comparer = comparer || new GenericComparer();
+    return map$$1;
+}
+function create$3(ie, comparer) {
+    comparer = comparer || new GenericComparer();
+    return from(comparer, ie ? tree_ofSeq(comparer, ie) : tree_empty());
+}
+
+
+
+
+
+function find$$1(k, map$$1) {
+    return tree_find(map$$1.comparer, k, map$$1.tree);
+}
+
+var _createClass$2 = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck$2(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Types = function (__exports) {
+                var Word = __exports.Word = function () {
+                                function Word(caseName, fields) {
+                                                _classCallCheck$2(this, Word);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(Word, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Types.Word",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                Word: ["number"]
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return Word;
+                }();
+
+                setType("VisualMIPS.Types.Word", Word);
+
+                var Half = __exports.Half = function () {
+                                function Half(caseName, fields) {
+                                                _classCallCheck$2(this, Half);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(Half, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Types.Half",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                Half: ["number"]
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return Half;
+                }();
+
+                setType("VisualMIPS.Types.Half", Half);
+
+                var Byte = __exports.Byte = function () {
+                                function Byte(caseName, fields) {
+                                                _classCallCheck$2(this, Byte);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(Byte, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Types.Byte",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                Byte: ["number"]
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return Byte;
+                }();
+
+                setType("VisualMIPS.Types.Byte", Byte);
+
+                var Register = __exports.Register = function () {
+                                function Register(caseName, fields) {
+                                                _classCallCheck$2(this, Register);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(Register, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Types.Register",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                Register: ["number"]
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return Register;
+                }();
+
+                setType("VisualMIPS.Types.Register", Register);
+
+                var Memory = __exports.Memory = function () {
+                                function Memory(caseName, fields) {
+                                                _classCallCheck$2(this, Memory);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(Memory, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Types.Memory",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                Memory: ["number"]
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return Memory;
+                }();
+
+                setType("VisualMIPS.Types.Memory", Memory);
+                return __exports;
+}({});
+var Instructions = function (__exports) {
+                var I_Opcode = __exports.I_Opcode = function () {
+                                function I_Opcode(caseName, fields) {
+                                                _classCallCheck$2(this, I_Opcode);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(I_Opcode, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Instructions.I_Opcode",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                ADDI: [],
+                                                                                                ADDIU: [],
+                                                                                                ANDI: [],
+                                                                                                BEQ: [],
+                                                                                                BGEZ: [],
+                                                                                                BGEZAL: [],
+                                                                                                BGTZ: [],
+                                                                                                BLEZ: [],
+                                                                                                BLTZ: [],
+                                                                                                BLTZAL: [],
+                                                                                                BNE: [],
+                                                                                                LB: [],
+                                                                                                LBU: [],
+                                                                                                LH: [],
+                                                                                                LUI: [],
+                                                                                                LW: [],
+                                                                                                LWL: [],
+                                                                                                LWR: [],
+                                                                                                ORI: [],
+                                                                                                SB: [],
+                                                                                                SH: [],
+                                                                                                SLTI: [],
+                                                                                                SLTIU: [],
+                                                                                                SW: [],
+                                                                                                XORI: []
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return I_Opcode;
+                }();
+
+                setType("VisualMIPS.Instructions.I_Opcode", I_Opcode);
+
+                var J_Opcode = __exports.J_Opcode = function () {
+                                function J_Opcode(caseName, fields) {
+                                                _classCallCheck$2(this, J_Opcode);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(J_Opcode, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Instructions.J_Opcode",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                J: [],
+                                                                                                JAL: []
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return J_Opcode;
+                }();
+
+                setType("VisualMIPS.Instructions.J_Opcode", J_Opcode);
+
+                var R_Opcode = __exports.R_Opcode = function () {
+                                function R_Opcode(caseName, fields) {
+                                                _classCallCheck$2(this, R_Opcode);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(R_Opcode, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Instructions.R_Opcode",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                ADD: [],
+                                                                                                ADDU: [],
+                                                                                                AND: [],
+                                                                                                DIV: [],
+                                                                                                DIVU: [],
+                                                                                                JALR: [],
+                                                                                                JR: [],
+                                                                                                MFHI: [],
+                                                                                                MFLO: [],
+                                                                                                MTHI: [],
+                                                                                                MTLO: [],
+                                                                                                MULT: [],
+                                                                                                MULTU: [],
+                                                                                                OR: [],
+                                                                                                SLL: [],
+                                                                                                SLLV: [],
+                                                                                                SLT: [],
+                                                                                                SLTU: [],
+                                                                                                SRA: [],
+                                                                                                SRAV: [],
+                                                                                                SRL: [],
+                                                                                                SRLV: [],
+                                                                                                SUB: [],
+                                                                                                SUBU: [],
+                                                                                                XOR: []
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return R_Opcode;
+                }();
+
+                setType("VisualMIPS.Instructions.R_Opcode", R_Opcode);
+                var IMap = __exports.IMap = create$3(ofArray([["ADDI", new I_Opcode("ADDI", [])], ["ADDIU", new I_Opcode("ADDIU", [])], ["ANDI", new I_Opcode("ANDI", [])], ["ORI", new I_Opcode("ORI", [])], ["XORI", new I_Opcode("XORI", [])], ["BEQ", new I_Opcode("BEQ", [])], ["BGEZ", new I_Opcode("BGEZ", [])], ["BGEZAL", new I_Opcode("BGEZAL", [])], ["BGTZ", new I_Opcode("BGTZ", [])], ["BLEZ", new I_Opcode("BLEZ", [])], ["BLTZ", new I_Opcode("BLTZ", [])], ["BLTZAL", new I_Opcode("BLTZAL", [])], ["BNE", new I_Opcode("BNE", [])], ["LB", new I_Opcode("LB", [])], ["LBU", new I_Opcode("LBU", [])], ["LH", new I_Opcode("LH", [])], ["LW", new I_Opcode("LW", [])], ["LWL", new I_Opcode("LWL", [])], ["LWR", new I_Opcode("LWR", [])], ["SB", new I_Opcode("SB", [])], ["SH", new I_Opcode("SH", [])], ["SW", new I_Opcode("SW", [])], ["LUI", new I_Opcode("LUI", [])], ["SLTI", new I_Opcode("SLTI", [])], ["SLTIU", new I_Opcode("SLTIU", [])]]), new GenericComparer(compare));
+                var JMap = __exports.JMap = create$3(ofArray([["J", new J_Opcode("J", [])], ["JAL", new J_Opcode("JAL", [])]]), new GenericComparer(compare));
+                var RMap = __exports.RMap = create$3(ofArray([["ADD", new R_Opcode("ADD", [])], ["ADDU", new R_Opcode("ADDU", [])], ["AND", new R_Opcode("AND", [])], ["OR", new R_Opcode("OR", [])], ["SRA", new R_Opcode("SRA", [])], ["SRAV", new R_Opcode("SRAV", [])], ["SRL", new R_Opcode("SRL", [])], ["SRLV", new R_Opcode("SRLV", [])], ["SLL", new R_Opcode("SLL", [])], ["SLLV", new R_Opcode("SLLV", [])], ["SUB", new R_Opcode("SUB", [])], ["SUBU", new R_Opcode("SUBU", [])], ["XOR", new R_Opcode("XOR", [])], ["SLT", new R_Opcode("SLT", [])], ["SLTU", new R_Opcode("SLTU", [])], ["DIV", new R_Opcode("DIV", [])], ["DIVU", new R_Opcode("DIVU", [])], ["MULT", new R_Opcode("MULT", [])], ["MULTU", new R_Opcode("MULTU", [])], ["JR", new R_Opcode("JR", [])], ["JALR", new R_Opcode("JALR", [])], ["MFHI", new R_Opcode("MFHI", [])], ["MFLO", new R_Opcode("MFLO", [])], ["MTHI", new R_Opcode("MTHI", [])], ["MTLO", new R_Opcode("MTLO", [])]]), new GenericComparer(compare));
+
+                var Shiftval = __exports.Shiftval = function () {
+                                function Shiftval(caseName, fields) {
+                                                _classCallCheck$2(this, Shiftval);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(Shiftval, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Instructions.Shiftval",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                Shiftval: ["number"]
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return Shiftval;
+                }();
+
+                setType("VisualMIPS.Instructions.Shiftval", Shiftval);
+
+                var Targetval = __exports.Targetval = function () {
+                                function Targetval(caseName, fields) {
+                                                _classCallCheck$2(this, Targetval);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(Targetval, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Instructions.Targetval",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                Targetval: ["number"]
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return Targetval;
+                }();
+
+                setType("VisualMIPS.Instructions.Targetval", Targetval);
+
+                var I_type = __exports.I_type = function () {
+                                function I_type(opcode, r_s, r_t, immed) {
+                                                _classCallCheck$2(this, I_type);
+
+                                                this.opcode = opcode;
+                                                this.r_s = r_s;
+                                                this.r_t = r_t;
+                                                this.immed = immed;
+                                }
+
+                                _createClass$2(I_type, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Instructions.I_type",
+                                                                                interfaces: ["FSharpRecord", "System.IEquatable", "System.IComparable"],
+                                                                                properties: {
+                                                                                                opcode: I_Opcode,
+                                                                                                r_s: Types.Register,
+                                                                                                r_t: Types.Register,
+                                                                                                immed: Types.Half
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsRecords(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareRecords(this, other);
+                                                }
+                                }]);
+
+                                return I_type;
+                }();
+
+                setType("VisualMIPS.Instructions.I_type", I_type);
+
+                var J_type = __exports.J_type = function () {
+                                function J_type(opcode, target) {
+                                                _classCallCheck$2(this, J_type);
+
+                                                this.opcode = opcode;
+                                                this.target = target;
+                                }
+
+                                _createClass$2(J_type, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Instructions.J_type",
+                                                                                interfaces: ["FSharpRecord", "System.IEquatable", "System.IComparable"],
+                                                                                properties: {
+                                                                                                opcode: J_Opcode,
+                                                                                                target: Targetval
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsRecords(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareRecords(this, other);
+                                                }
+                                }]);
+
+                                return J_type;
+                }();
+
+                setType("VisualMIPS.Instructions.J_type", J_type);
+
+                var R_type = __exports.R_type = function () {
+                                function R_type(opcode, r_s, r_t, r_d, shift) {
+                                                _classCallCheck$2(this, R_type);
+
+                                                this.opcode = opcode;
+                                                this.r_s = r_s;
+                                                this.r_t = r_t;
+                                                this.r_d = r_d;
+                                                this.shift = shift;
+                                }
+
+                                _createClass$2(R_type, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Instructions.R_type",
+                                                                                interfaces: ["FSharpRecord", "System.IEquatable", "System.IComparable"],
+                                                                                properties: {
+                                                                                                opcode: R_Opcode,
+                                                                                                r_s: Types.Register,
+                                                                                                r_t: Types.Register,
+                                                                                                r_d: Types.Register,
+                                                                                                shift: Shiftval
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsRecords(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareRecords(this, other);
+                                                }
+                                }]);
+
+                                return R_type;
+                }();
+
+                setType("VisualMIPS.Instructions.R_type", R_type);
+
+                var Instruction = __exports.Instruction = function () {
+                                function Instruction(caseName, fields) {
+                                                _classCallCheck$2(this, Instruction);
+
+                                                this.Case = caseName;
+                                                this.Fields = fields;
+                                }
+
+                                _createClass$2(Instruction, [{
+                                                key: _Symbol.reflection,
+                                                value: function () {
+                                                                return {
+                                                                                type: "VisualMIPS.Instructions.Instruction",
+                                                                                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                                                                                cases: {
+                                                                                                I: [I_type],
+                                                                                                J: [J_type],
+                                                                                                R: [R_type]
+                                                                                }
+                                                                };
+                                                }
+                                }, {
+                                                key: "Equals",
+                                                value: function (other) {
+                                                                return equalsUnions(this, other);
+                                                }
+                                }, {
+                                                key: "CompareTo",
+                                                value: function (other) {
+                                                                return compareUnions(this, other);
+                                                }
+                                }]);
+
+                                return Instruction;
+                }();
+
+                setType("VisualMIPS.Instructions.Instruction", Instruction);
+                return __exports;
+}({});
+
+var _createClass$1 = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck$1(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var parseResponse = function () {
+    function parseResponse(caseName, fields) {
+        _classCallCheck$1(this, parseResponse);
+
+        this.Case = caseName;
+        this.Fields = fields;
+    }
+
+    _createClass$1(parseResponse, [{
+        key: _Symbol.reflection,
+        value: function () {
+            return {
+                type: "VisualMIPS.Parser.parseResponse",
+                interfaces: ["FSharpUnion", "System.IEquatable", "System.IComparable"],
+                cases: {
+                    OK: [],
+                    ParseError: [],
+                    VarValue: ["number"]
+                }
+            };
+        }
+    }, {
+        key: "Equals",
+        value: function (other) {
+            return equalsUnions(this, other);
+        }
+    }, {
+        key: "CompareTo",
+        value: function (other) {
+            return compareUnions(this, other);
+        }
+    }]);
+
+    return parseResponse;
+}();
+setType("VisualMIPS.Parser.parseResponse", parseResponse);
+
+
+function parseI_Type(iTokens) {
+    var opcode = find$$1(iTokens[0], Instructions.IMap);
+    var r_s = new Types.Register("Register", [Number.parseInt(iTokens[1])]);
+    var r_t = new Types.Register("Register", [Number.parseInt(iTokens[2])]);
+    var immed = new Types.Half("Half", [Number.parseInt(iTokens[3])]);
+    return new Instructions.I_type(opcode, r_s, r_t, immed);
+}
+function parseJ_Type(jTokens) {
+    var opcode = find$$1(jTokens[0], Instructions.JMap);
+    var target = new Instructions.Targetval("Targetval", [Number.parseInt(jTokens[1])]);
+    return new Instructions.J_type(opcode, target);
+}
+function parseR_Type(rTokens) {
+    var opcode = find$$1(rTokens[0], Instructions.RMap);
+    var r_s = new Types.Register("Register", [Number.parseInt(rTokens[1])]);
+    var r_t = new Types.Register("Register", [Number.parseInt(rTokens[2])]);
+    var r_d = new Types.Register("Register", [Number.parseInt(rTokens[3])]);
+    var shift = new Instructions.Shiftval("Shiftval", [Number.parseInt(rTokens[4])]);
+    return new Instructions.R_type(opcode, r_s, r_t, r_d, shift);
+}
+function checkType(tokens) {
+    if (Instructions.IMap.has(tokens[0])) {
+        return new Instructions.Instruction("I", [parseI_Type(tokens)]);
+    } else if (Instructions.JMap.has(tokens[0])) {
+        return new Instructions.Instruction("J", [parseJ_Type(tokens)]);
+    } else if (Instructions.RMap.has(tokens[0])) {
+        return new Instructions.Instruction("R", [parseR_Type(tokens)]);
+    } else {
+        throw new Error("Invalid Opcode: Does not exist in MIPS I!");
+    }
+}
+
 var Util = function (__exports) {
     var load = __exports.load = function (key) {
         return defaultArg(localStorage.getItem(key), null, function ($var5) {
@@ -1076,7 +2384,7 @@ var getValue = function () {
     if (q != null) {
         return q;
     } else {
-        throw new Error("/Users/jian/Desktop/Jian/EIE3/Spring/HLP/HLP_Project/src/VisualMipsWeb/webComponent/src/main.fs", 79, 10);
+        throw new Error("/Users/jian/Desktop/Jian/EIE3/Spring/HLP/HLP_Project/src/VisualMipsWeb/webComponent/src/main.fs", 107, 14);
     }
 }();
 var z = "MIPSY stuff in here";
@@ -1087,36 +2395,73 @@ var resetButton = getById("reset");
 var stepBackwardsButton = getById("stepBackwards");
 var stepForwardsButton = getById("stepForwards");
 var errorLog = getById("errorLog");
-var register0 = getById("mipsRegister0");
-var register1 = getById("mipsRegister1");
-var register2 = getById("mipsRegister2");
-var register3 = getById("mipsRegister3");
-var register4 = getById("mipsRegister4");
-var register5 = getById("mipsRegister5");
-var register6 = getById("mipsRegister6");
-var register7 = getById("mipsRegister7");
-var register8 = getById("mipsRegister8");
-var register9 = getById("mipsRegister9");
-var register10 = getById("mipsRegister10");
-var register11 = getById("mipsRegister11");
-var register12 = getById("mipsRegister12");
+var HTMLRegister0 = getById("mipsRegister0");
+var HTMLRegister1 = getById("mipsRegister1");
+var HTMLRegister2 = getById("mipsRegister2");
+var HTMLRegister3 = getById("mipsRegister3");
+var HTMLRegister4 = getById("mipsRegister4");
+var HTMLRegister5 = getById("mipsRegister5");
+var HTMLRegister6 = getById("mipsRegister6");
+var HTMLRegister7 = getById("mipsRegister7");
+var HTMLRegister8 = getById("mipsRegister8");
+var HTMLRegister9 = getById("mipsRegister9");
+var HTMLRegister10 = getById("mipsRegister10");
+var HTMLRegister11 = getById("mipsRegister11");
+var HTMLRegister12 = getById("mipsRegister12");
 function modifyRegisterInHTML(register, registerValue) {
     register.innerHTML = registerValue;
 }
+function executeHandler() {
+    var eachLineProcessing = function eachLineProcessing(currentLine) {
+        var codeMirrorText = cmEditor.getLine(currentLine);
+        var input = tokenise(codeMirrorText);
+
+        if (codeMirrorText !== "") {
+            fsFormat("Instr: %A")(function (x) {
+                console.log(x);
+            })(checkType(input));
+        }
+    };
+
+    var processAllCodeMirrorInput = function processAllCodeMirrorInput(startLine) {
+        return function (lastLine) {
+            if (startLine === lastLine) {
+                eachLineProcessing(lastLine);
+            } else {
+                eachLineProcessing(startLine);
+                processAllCodeMirrorInput(startLine + 1)(lastLine);
+            }
+        };
+    };
+
+    processAllCodeMirrorInput(0)(cmEditor.lastLine());
+}
+function executeButtonHandler() {
+    return "0";
+}
+function resetButtonHandler() {
+    return "1";
+}
+function stepBackwardsButtonHandler() {
+    return "2";
+}
+function stepForwardsButtonHandler() {
+    return "3";
+}
 executeButton.addEventListener('click', function (_arg1) {
-    modifyRegisterInHTML(register0, "101010101010101");
+    executeHandler();
     return null;
 });
 resetButton.addEventListener('click', function (_arg2) {
-    modifyRegisterInHTML(register1, "101010101010101");
+    modifyRegisterInHTML(HTMLRegister1, "101010101010101");
     return null;
 });
 stepBackwardsButton.addEventListener('click', function (_arg3) {
-    modifyRegisterInHTML(register2, "101010101010101");
+    modifyRegisterInHTML(HTMLRegister2, "101010101010101");
     return null;
 });
 stepForwardsButton.addEventListener('click', function (_arg4) {
-    modifyRegisterInHTML(register3, "101010101010101");
+    modifyRegisterInHTML(HTMLRegister3, "101010101010101");
     return null;
 });
 
@@ -1133,20 +2478,25 @@ exports.resetButton = resetButton;
 exports.stepBackwardsButton = stepBackwardsButton;
 exports.stepForwardsButton = stepForwardsButton;
 exports.errorLog = errorLog;
-exports.register0 = register0;
-exports.register1 = register1;
-exports.register2 = register2;
-exports.register3 = register3;
-exports.register4 = register4;
-exports.register5 = register5;
-exports.register6 = register6;
-exports.register7 = register7;
-exports.register8 = register8;
-exports.register9 = register9;
-exports.register10 = register10;
-exports.register11 = register11;
-exports.register12 = register12;
+exports.HTMLRegister0 = HTMLRegister0;
+exports.HTMLRegister1 = HTMLRegister1;
+exports.HTMLRegister2 = HTMLRegister2;
+exports.HTMLRegister3 = HTMLRegister3;
+exports.HTMLRegister4 = HTMLRegister4;
+exports.HTMLRegister5 = HTMLRegister5;
+exports.HTMLRegister6 = HTMLRegister6;
+exports.HTMLRegister7 = HTMLRegister7;
+exports.HTMLRegister8 = HTMLRegister8;
+exports.HTMLRegister9 = HTMLRegister9;
+exports.HTMLRegister10 = HTMLRegister10;
+exports.HTMLRegister11 = HTMLRegister11;
+exports.HTMLRegister12 = HTMLRegister12;
 exports.modifyRegisterInHTML = modifyRegisterInHTML;
+exports.executeHandler = executeHandler;
+exports.executeButtonHandler = executeButtonHandler;
+exports.resetButtonHandler = resetButtonHandler;
+exports.stepBackwardsButtonHandler = stepBackwardsButtonHandler;
+exports.stepForwardsButtonHandler = stepForwardsButtonHandler;
 
 }((this.files = this.files || {})));
 
