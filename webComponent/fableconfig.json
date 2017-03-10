@@ -3,6 +3,6 @@
     "sourceMaps": true,
     "rollup": {
 	     "entry" : "./src/main.js",
-             "dest": "./dist/bundle.js"
+             "dest": "./assets/js/bundle.js"
     }
 }

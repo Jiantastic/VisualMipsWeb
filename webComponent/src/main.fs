@@ -58,14 +58,12 @@ module Util =
 // change this to Option a' type?
 
 // saving data format -> key : string, value : Record OR Union type
+
+// API to save/load to HTML5 localStorage
 let save arg1 arg2 = Util.save arg1 arg2
 
 // loading data format -> key : string
 let load arg1 = Util.load arg1
-
-let getById<'T when 'T :> Browser.HTMLElement> id =
-    Browser.document.getElementById(id) :?> 'T
-
 let editId = getById<Browser.HTMLTextAreaElement>("editor")
 
 let cmEditor = App.CodeMirrorImports.CodeMirror.fromTextArea(editId, initOptions)
@@ -100,18 +98,31 @@ let mm = cmEditor.getLine 0
 
 //printfn "value of first line is %A" mm
 
+// HTML elements
 let executeButton = getById<Browser.HTMLButtonElement>("execute")
+let resetButton = getById<Browser.HTMLButtonElement>("reset")
+let stepBackwardsButton = getById<Browser.HTMLButtonElement>("stepBackwards")
+let stepForwardsButton =  getById<Browser.HTMLButtonElement>("stepForwards")
 let output = getById<Browser.HTMLDivElement>("output")
-
 let register1 = getById<Browser.HTMLElement>("mipsRegister1")
+let register2 = getById<Browser.HTMLElement>("mipsRegister2")
+let register3 = getById<Browser.HTMLElement>("mipsRegister3")
+let register4 = getById<Browser.HTMLElement>("mipsRegister4")
+let register5 = getById<Browser.HTMLElement>("mipsRegister5")
+let register6 = getById<Browser.HTMLElement>("mipsRegister6")
+let register7 = getById<Browser.HTMLElement>("mipsRegister7")
+let register8 = getById<Browser.HTMLElement>("mipsRegister8")
+let register9 = getById<Browser.HTMLElement>("mipsRegister9")
+let register10 = getById<Browser.HTMLElement>("mipsRegister10")
+let register11 = getById<Browser.HTMLElement>("mipsRegister11")
+let register12 = getById<Browser.HTMLElement>("mipsRegister12")
 
 // let f() = ""
 
-let showDataInHTML() = 
-    output.innerHTML <- "this is actually working!"
-    register1.innerHTML <- "12345"
+let modifyRegisterInHTML (register : Fable.Import.Browser.HTMLElement) (registerValue : string) = 
+    register.innerHTML <- registerValue
 
-executeButton.addEventListener_click(fun _ -> showDataInHTML(); null)
+executeButton.addEventListener_click(fun _ -> modifyRegisterInHTML register1 "101010101010101"; null)
 
 // BUTTONS
 // EXECUTE immediately executes cmEditor based on saved last line
@@ -158,3 +169,12 @@ The function `updateUi` is responsible for displaying the game and integrating t
 // decimalButton.addEventListener_click(fun _ -> getDecimalValue(); null)
 // binaryButton.addEventListener_click(fun _ -> getBinaryValue(); null)
 // hexButton.addEventListener_click(fun _ -> getHexValue(); null)
+
+
+
+(*
+    HTML5 localStorage:
+    line1 : MachineState1
+    line2 : MachineState2
+    line3 : MachineState3
+*)
