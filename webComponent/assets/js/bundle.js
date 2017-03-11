@@ -2369,17 +2369,17 @@ var Util = function (__exports) {
 
     return __exports;
 }({});
-function save(arg1, arg2) {
+function saveToLocalStorage(arg1, arg2) {
     Util.save(arg1, arg2);
 }
-function load(arg1) {
+function loadToLocalStorage(arg1) {
     return Util.load(arg1);
 }
 var editId = getById("editor");
 var cmEditor = CodeMirror.fromTextArea(editId, initOptions);
-save("hello", "world");
+saveToLocalStorage("hello", "world");
 var getValue = function () {
-    var q = load("hello");
+    var q = loadToLocalStorage("hello");
 
     if (q != null) {
         return q;
@@ -2440,7 +2440,19 @@ function executeButtonHandler() {
     return "0";
 }
 function resetButtonHandler() {
-    return "1";
+    modifyRegisterInHTML(HTMLRegister0, "0");
+    modifyRegisterInHTML(HTMLRegister1, "0");
+    modifyRegisterInHTML(HTMLRegister2, "0");
+    modifyRegisterInHTML(HTMLRegister3, "0");
+    modifyRegisterInHTML(HTMLRegister4, "0");
+    modifyRegisterInHTML(HTMLRegister5, "0");
+    modifyRegisterInHTML(HTMLRegister6, "0");
+    modifyRegisterInHTML(HTMLRegister7, "0");
+    modifyRegisterInHTML(HTMLRegister8, "0");
+    modifyRegisterInHTML(HTMLRegister9, "0");
+    modifyRegisterInHTML(HTMLRegister10, "0");
+    modifyRegisterInHTML(HTMLRegister11, "0");
+    modifyRegisterInHTML(HTMLRegister12, "0");
 }
 function stepBackwardsButtonHandler() {
     return "2";
@@ -2453,7 +2465,7 @@ executeButton.addEventListener('click', function (_arg1) {
     return null;
 });
 resetButton.addEventListener('click', function (_arg2) {
-    modifyRegisterInHTML(HTMLRegister1, "101010101010101");
+    resetButtonHandler();
     return null;
 });
 stepBackwardsButton.addEventListener('click', function (_arg3) {
@@ -2466,8 +2478,8 @@ stepForwardsButton.addEventListener('click', function (_arg4) {
 });
 
 exports.Util = Util;
-exports.save = save;
-exports.load = load;
+exports.saveToLocalStorage = saveToLocalStorage;
+exports.loadToLocalStorage = loadToLocalStorage;
 exports.editId = editId;
 exports.cmEditor = cmEditor;
 exports.getValue = getValue;

@@ -89,21 +89,21 @@ module main =
     // saving data format -> key : string, value : Record OR Union type
 
     // API to save/load to HTML5 localStorage
-    let save arg1 arg2 = Util.save arg1 arg2
+    let saveToLocalStorage arg1 arg2 = Util.save arg1 arg2
 
     // loading data format -> key : string
-    let load arg1 = Util.load arg1
+    let loadToLocalStorage arg1 = Util.load arg1
     let editId = getById<Browser.HTMLTextAreaElement>("editor")
 
     let cmEditor = App.CodeMirrorImports.CodeMirror.fromTextArea(editId, initOptions)
 
-    save "hello" "world"
+    saveToLocalStorage "hello" "world"
 
 
     // THIS FUCKING WORKS
     // add None handler to complete match statements
     let getValue = 
-        let q : Option<string> = load "hello"
+        let q : Option<string> = loadToLocalStorage "hello"
         match q with 
         | Some x -> x 
 
@@ -183,6 +183,7 @@ module main =
     // MAIN FUNCTION : feed inputs line by line codeMirror.getLine, all buttonHandlers call the executeHandler(), calls lex() -> calls parse() -> calls execute() -> save in HTML5 local Storage
     let executeHandler() = 
         // main code body which holds the lex() -> parse() -> execute() stage, return MachineState
+        // TODO : saving MachineState into HTML5 localStorage via saveToLocalStorage and loadToLocalStorage methods
         let eachLineProcessing = fun currentLine -> 
             let codeMirrorText = cmEditor.getLine currentLine;
             let input = tokenise codeMirrorText;
@@ -192,9 +193,24 @@ module main =
         
     
     // executeButtonHandler calls executeHandler() starts from the first line
+    // this might be redundant / add logic to modify register HTML
     let executeButtonHandler() = "0"
+
     // just set all registers to 0 graphically
-    let resetButtonHandler() = "1"
+    let resetButtonHandler() = 
+        modifyRegisterInHTML HTMLRegister0 "0"
+        modifyRegisterInHTML HTMLRegister1 "0"
+        modifyRegisterInHTML HTMLRegister2 "0"
+        modifyRegisterInHTML HTMLRegister3 "0"
+        modifyRegisterInHTML HTMLRegister4 "0"
+        modifyRegisterInHTML HTMLRegister5 "0"
+        modifyRegisterInHTML HTMLRegister6 "0"
+        modifyRegisterInHTML HTMLRegister7 "0"
+        modifyRegisterInHTML HTMLRegister8 "0"
+        modifyRegisterInHTML HTMLRegister9 "0"
+        modifyRegisterInHTML HTMLRegister10 "0"
+        modifyRegisterInHTML HTMLRegister11 "0"
+        modifyRegisterInHTML HTMLRegister12 "0"
     // checks if executeHandler() has been called considering that current CodeMirror text editor content has not change,if changed, call execute
     let stepBackwardsButtonHandler() = "2"
     // checks if executeHandler() has been called considering that current CodeMirror text editor content has not change
@@ -204,7 +220,7 @@ module main =
 
     // how to convert string / types to HTMLRegister0 , use match x with "register0" -> HTMLRegister0
     executeButton.addEventListener_click(fun _ -> executeHandler(); null)
-    resetButton.addEventListener_click(fun _ -> modifyRegisterInHTML HTMLRegister1 "101010101010101"; null)
+    resetButton.addEventListener_click(fun _ -> resetButtonHandler(); null)
     stepBackwardsButton.addEventListener_click(fun _ -> modifyRegisterInHTML HTMLRegister2 "101010101010101"; null)
     stepForwardsButton.addEventListener_click(fun _ -> modifyRegisterInHTML HTMLRegister3 "101010101010101"; null)
 
@@ -246,6 +262,8 @@ module main =
 
     // let testingInput = lazy(Browser.myCodeMirror.getValue())
 
+
+    // NOTE : HEX,DECIMAL and BINARY conversion will be written in JavaScript and CSS - more effective, not dependancies on other components so it's fine
     // let decimalButton = getById<Browser.HTMLButtonElement>("register-decimal")
     // let binaryButton = getById<Browser.HTMLButtonElement>("register-binary")
     // let hexButton = getById<Browser.HTMLButtonElement>("register-hex")
