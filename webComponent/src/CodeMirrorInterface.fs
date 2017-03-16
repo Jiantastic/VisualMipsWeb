@@ -18,7 +18,7 @@ let DefineCodeMirrorMode modeName tokFun (initState: 'T) =
           CopyState ((fun st -> ref (! st) ) :> (obj) )
         ]
     CodeMirror?defineMode(modeName, System.Func<_,_,_>(fun a -> fun b -> armCodeMirrorMode)) |> ignore
-    printfn "%s mode defined" modeName
+    //printfn "%s mode defined" modeName
 
 /// Turns JS booleans into F# option
 /// False and null and undefined all map to None
@@ -50,21 +50,21 @@ let RetBool stream y = match optJSBool y with | None -> None | _ -> Some stream
 /// Succeeds if one or more characters are matched.
 let (|EatSpace|_|) (stream:CodeMirrorStream) = 
    let x = stream.eatSpace()
-   printfn "Eating spaces...<%A>" x
+   // printfn "Eating spaces...<%A>" x
    x |> RetBool stream
 
 /// Active recogniser matches if regexp succeeds and consumes matches chars
 /// Regexp must start with ^ to force matching from start.
 let (|EatMatch|_|) (regExpStr:string) (stream:CodeMirrorStream) =
     let x = stream.``match`` (Regex regExpStr, true, false)
-    printfn "Eatmatch: %A" x
+    // printfn "Eatmatch: %A" x
     x |> RetObj stream
 
 /// Active recogniser matches if regexp succeeds but does not consume stream
 /// Regexp must start with ^ to force matching from start.
 let (|PeekMatch|_|) (regExpStr:string) (stream:CodeMirrorStream) =
     let x = stream.``match`` (Regex regExpStr, false, false)
-    printfn "Peekmatch: %A" x
+    // printfn "Peekmatch: %A" x
     x |> RetObj stream
 
 /// Active recogniser consumes stream until just before character c.
@@ -72,7 +72,7 @@ let (|PeekMatch|_|) (regExpStr:string) (stream:CodeMirrorStream) =
 let (|SkipTo|_|) (c:char) (stream:CodeMirrorStream) =
     let x = stream.skipTo(c.ToString())
     let y = optJSObj x
-    printfn "SkipTo:%A %A %A" x y (stream.current())
+    // printfn "SkipTo:%A %A %A" x y (stream.current())
     x |> RetObj stream
     
 
@@ -93,13 +93,14 @@ let (|EatLine|_|) (stream:CodeMirrorStream) =
 let tokFunction  (stream:CodeMirrorStream)  (state:obj) =
     let ret = 
         match stream with 
-        | EatSpace _ -> printfn "space 2"; "var2"
-        | EatMatch "^[a-zA-Z][a-zA-Z0-9]*" _ ->printfn "sym 3"; "atom"
-        | EatMatch "^//" (EatLine x) -> printfn "line 4";"comment"
-        | EatMatch "^[0-9][0-9]*" _ -> printfn "num 5";"number"
-        | EatMatch "^." s -> printfn "op 6";  "keyword"
-        | _ -> printfn "? 7"; null
-    printfn "Token: <%s '%s'> pos=%f" ret (stream.current()) stream.pos
+        | EatSpace _ -> "var2"
+        | EatMatch "^(ADDI|ADDIU|ANDI|ORI|XORI|BEQ|BGEZAL|BGEZ|BGTZ|BLEZ|BLTZAL|BLTZ|BNE|LB|LBU|LH|LWL|LW|LWR|SB|SH|SW|LUI|SLTI|SLTIU|JAL|J|ADDU|ADD|AND|OR|SRAV|SRA|SRLV|SRL|SLLV|SLL|SUBU|SUB|XOR|SLTU|SLT|DIVU|DIV|MULTU|MULT|JR|JALR|MFHI|MFLO|MTHI|MTLO)" _ -> "keyword"
+        | EatMatch "^[a-zA-Z][a-zA-Z0-9]*" _ -> "atom"
+        | EatMatch "^#" (EatLine x) -> "comment"
+        | EatMatch "^[0-9][0-9]*" _ -> "number"
+        | EatMatch "^." s -> "keyword"
+        | _ -> null
+    // printfn "Token: <%s '%s'> pos=%f" ret (stream.current()) stream.pos
     ret
 
 /// Sample definition, with trivial state `0` which cannot be mutated
@@ -107,7 +108,8 @@ DefineCodeMirrorMode "arm" tokFunction 0
 
 // let initOptions = [Value "" ; Mode "arm"]
 
-let initOptions = [LineNumbers ; StyleActiveLine "true" ; MatchBrackets "true" ; Mode  "javascript" ; Theme "monokai"]
+// Mode  "javascript"
+let initOptions = [LineNumbers ; StyleActiveLine "true" ; MatchBrackets "true" ; Mode  "arm" ; Theme "monokai"]
 
 /// Access given element of DOC selected by its ID
 /// Used to find a textArea box which CodeMirror can be added to.

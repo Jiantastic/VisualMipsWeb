@@ -10,6 +10,9 @@
   "author": "wjwong",
   "license": "ISC",
   "devDependencies": {
+    "dialog": "^0.2.0",
+    "electron-connect": "^0.6.1",
+    "electron-default-menu": "^1.0.0",
     "fable-compiler": "^0.7.48",
     "fable-import-react": "^0.5.2"
   },

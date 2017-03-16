@@ -1,19 +1,5 @@
 (* 
 
-Components involved:
-
-Local Storage - store data in JSON Format
-Program component - wrapper for entire application
-CodeMirror component - code this in JavaScript maybe?
-Registers component - wrapper for all registers
-Register component - 1 instance of a register, under Registers component
-Flags component - MIPS flags. Are there any?
-
-
-How does RESET work?
-
-Reset simply sets everything to 0, execute gets last value
-
 How does STEP FORWARD, STEP BACKWARD works?
 
 we need to store the states of all steps in HTML5 localStorage
@@ -32,6 +18,10 @@ Codemirror.getline -> lex() -> parse() -> execute() -> save state in localStorag
 // BROWSER DOCUMENTATION -> https://github.com/fable-compiler/Fable/blob/master/src/fable/Fable.Core/Import/Fable.Import.Browser.fs
 
 (*
+    // More optional features (time permitting):
+    1. Save Codemirror text data in HTML5 local Storage
+    2. Input forms for Register values so user can manipulate them freely
+
     UI TODO:
     Program counter 
     PCNext
@@ -66,6 +56,11 @@ open Types
 open Instructions
 open Parser
 open Tokeniser
+open MachineState
+open Executor
+
+// Dictionaries
+open System.Collections.Generic
 
 module main = 
 
@@ -92,7 +87,7 @@ module main =
     let saveToLocalStorage arg1 arg2 = Util.save arg1 arg2
 
     // loading data format -> key : string
-    let loadToLocalStorage arg1 = Util.load arg1
+    let loadFromLocalStorage arg1 = Util.load arg1
     let editId = getById<Browser.HTMLTextAreaElement>("editor")
 
     let cmEditor = App.CodeMirrorImports.CodeMirror.fromTextArea(editId, initOptions)
@@ -103,7 +98,7 @@ module main =
     // THIS FUCKING WORKS
     // add None handler to complete match statements
     let getValue = 
-        let q : Option<string> = loadToLocalStorage "hello"
+        let q : Option<string> = loadFromLocalStorage "hello"
         match q with 
         | Some x -> x 
 
@@ -114,7 +109,7 @@ module main =
     //     | Some f -> f
     //     | None -> printfn "hello world"
 
-    let z = "MIPSY stuff in here"
+    let z = "AND 1,2,3      # this is a comment!"
 
     cmEditor.setValue z
 
@@ -181,22 +176,131 @@ module main =
     *)
 
     // MAIN FUNCTION : feed inputs line by line codeMirror.getLine, all buttonHandlers call the executeHandler(), calls lex() -> calls parse() -> calls execute() -> save in HTML5 local Storage
+
+    // initialisation of non-mutable initial machineState
+
+    let mutable globalMachineStates= new Dictionary<string, MachineState>()
+    globalMachineStates.["line-1"] <- initialise
+
+    printfn "init example - %A" initialise
+    printfn "from dictionary - %A" globalMachineStates
+
+    
+    let updateGlobalMachineState (currentLine : int) (mach : MachineState) =
+        globalMachineStates.["line"+string(currentLine)] <- mach
+
+    // returns the current machineState for a given line number
+    // use map instead of HTML5 localStorage probs? - more transferable
+    // let getCurrentMachineState (currentLineNumber : int) =
+    //     printfn "wtf is going on here"
+    //     match loadFromLocalStorage ("line"+string(currentLineNumber)) with 
+    //     | Some x -> x
+    //     | _ -> failwithf "error loading machine state from HTML5 localStorage"
+
+    let getCurrentMachineState (currentLineNumber : int) =
+
+        globalMachineStates.["line"+string(currentLineNumber)]
+
+
+    let printLogAndUpdateRegisters (currentLineNumber : int) =
+        // let getPCValue = getPC globalMachineState
+        // match 
+        let machStateToString (mach:MachineState) = 
+            match mach.State with 
+            | RunOK -> "RunOK"
+            | RunTimeErr i -> "RunTimeErr : " + i
+            | SyntaxErr i -> "SyntaxErr : " + i
+        
+        let hiToString (mach:MachineState) = 
+            match (getHi mach) with 
+            | Word x -> "Hi : " + string(x)
+            
+        let loToString (mach:MachineState) = 
+            match (getLo mach) with
+            | Word x -> "Lo : " + string(x)
+        
+        let pcToString (mach:MachineState) = 
+            match (getPC mach) with
+            | Word x -> "PC : " + string(x)
+        
+        let nextPCToString (mach:MachineState) = 
+            match (getNextPC mach) with 
+            | Word x -> "nextPC : " + string(x)
+
+        let nextNextPCToString (mach:MachineState) = 
+            match (getNextNextPC mach) with 
+            | Some x -> "NextNextPC : " + string(x)
+            | None -> "Nothing is here"
+
+        // TODO : MemMAP
+
+        let registerStateToString (mach:MachineState) = 
+            // change this to more functional style?
+
+            for i in 0..31 do
+                match mach.RegMap.[Register(i)] with 
+                | Word m -> errorLog.insertAdjacentHTML("beforeend","R"+string(i) + "=" + string(m) + "   ")
+            
+
+        errorLog.insertAdjacentHTML ("beforeend","<p>Line " + string(currentLineNumber) + ": " + (cmEditor.getLine currentLineNumber) + " " + machStateToString (getCurrentMachineState currentLineNumber) + " " + "</p>")
+        errorLog.insertAdjacentHTML ("beforeend","<p>" + (hiToString (getCurrentMachineState currentLineNumber)) + " " + (loToString (getCurrentMachineState currentLineNumber)) + " " + (pcToString (getCurrentMachineState currentLineNumber)) + " " + (nextPCToString (getCurrentMachineState currentLineNumber)) + " " + (nextNextPCToString (getCurrentMachineState currentLineNumber)) + "</p>")
+
+        registerStateToString (getCurrentMachineState currentLineNumber)
+        
     let executeHandler() = 
+        // NOTE : there probably has to be a global machine state that I must reference, I should probably instantiate that global MachineState here
         // main code body which holds the lex() -> parse() -> execute() stage, return MachineState
         // TODO : saving MachineState into HTML5 localStorage via saveToLocalStorage and loadToLocalStorage methods
-        let eachLineProcessing = fun currentLine -> 
-            let codeMirrorText = cmEditor.getLine currentLine;
-            let input = tokenise codeMirrorText;
-            if codeMirrorText <> "" then printfn "Instr: %A" (checkType input)
+
+        // eachLineProcessing returns a machine state that is used as the next input
+
+        // when executeHandler is called, we save the content of the text editor to HTML5 localStorage
+
+        // let eachLineProcessing (currentLine : int) (currentMachineState : MachineState) =
+        //     printfn "wtf is going on here 2 - %A" currentMachineState
+        //     let codeMirrorText = cmEditor.getLine currentLine;
+        //     let input = tokenise codeMirrorText;
+        //     let instruction = parse input
+        //     printfn "aaaa"
+        //     currentMachineState 
+        //     |> setReg (Register 1) (Word 32u)
+        //     |> setReg (Register 2) (Word 32u)
+        //     |> executeInstruction instruction
+        //     |> saveToLocalStorage "line1"
+
+        //     printfn "after this?"
+        //     printLogAndUpdateRegisters currentLine
+
+        //     // if codeMirrorText <> "" then printfn "Instr: %A" (checkType input)
+        // let rec processAllCodeMirrorInput (startLine : int) (lastLine : int) = if startLine=lastLine then eachLineProcessing lastLine (getCurrentMachineState lastLine) else eachLineProcessing startLine (getCurrentMachineState startLine); processAllCodeMirrorInput (startLine+1) lastLine
+        // processAllCodeMirrorInput 0 (cmEditor.lastLine())
+
+
+        let eachLineProcessing (currentLine : int) =
+            let codeMirrorText = cmEditor.getLine currentLine
+            let input = tokenise codeMirrorText
+            let instruction = parse input
+            (getCurrentMachineState (currentLine-1))
+            |> setReg (Register 1) (Word 32u)
+            |> setReg (Register 2) (Word 32u)
+            |> executeInstruction instruction
+            |> updateGlobalMachineState currentLine
+
+            printLogAndUpdateRegisters currentLine
+
+
+            // if codeMirrorText <> "" then printfn "Instr: %A" (checkType input)
         let rec processAllCodeMirrorInput (startLine : int) (lastLine : int) = if startLine=lastLine then eachLineProcessing lastLine else eachLineProcessing startLine; processAllCodeMirrorInput (startLine+1) lastLine
         processAllCodeMirrorInput 0 (cmEditor.lastLine())
-        
+
+        // TODO: update register values according to the lastLine
+
     
     // executeButtonHandler calls executeHandler() starts from the first line
     // this might be redundant / add logic to modify register HTML
     let executeButtonHandler() = "0"
 
-    // just set all registers to 0 graphically
+    // just set all registers to 0 graphically, set machine state to initialise?
     let resetButtonHandler() = 
         modifyRegisterInHTML HTMLRegister0 "0"
         modifyRegisterInHTML HTMLRegister1 "0"
@@ -211,6 +315,7 @@ module main =
         modifyRegisterInHTML HTMLRegister10 "0"
         modifyRegisterInHTML HTMLRegister11 "0"
         modifyRegisterInHTML HTMLRegister12 "0"
+        errorLog.innerHTML <- ""
     // checks if executeHandler() has been called considering that current CodeMirror text editor content has not change,if changed, call execute
     let stepBackwardsButtonHandler() = "2"
     // checks if executeHandler() has been called considering that current CodeMirror text editor content has not change
@@ -245,33 +350,11 @@ module main =
     // we take in one line of string input at a time -> so 1st line -> lex() -> parse() -> execute() -> update HTML localStorage, g "line1" Record/Union, we repeat this for each line 
 
 
-
-
-    // based on samegame - https://github.com/fable-compiler/Fable/blob/master/samples/browser/samegame/samegame.fsx
-
-    (**
-    The function `updateUi` is responsible for displaying the game and integrating the user interactions. These are the steps for updating the UI:
-    1. The HTML elements for displaying the board and the score are obtained.
-    2. A nested function `addListeners` for adding listeners for click events for all table cells is defined. The handlers will play a move and then recursively call `updateUi` again to update the UI with the new game state.
-    3. A pattern match of the game state is performed. Depending on the state, the board will be updated, event listeners will be added, and the score will be updated.
-    *)
-
-
     // function to load data from HTML5 localStorage
 
 
     // let testingInput = lazy(Browser.myCodeMirror.getValue())
 
-
-    // NOTE : HEX,DECIMAL and BINARY conversion will be written in JavaScript and CSS - more effective, not dependancies on other components so it's fine
-    // let decimalButton = getById<Browser.HTMLButtonElement>("register-decimal")
-    // let binaryButton = getById<Browser.HTMLButtonElement>("register-binary")
-    // let hexButton = getById<Browser.HTMLButtonElement>("register-hex")
-
-
-    // decimalButton.addEventListener_click(fun _ -> getDecimalValue(); null)
-    // binaryButton.addEventListener_click(fun _ -> getBinaryValue(); null)
-    // hexButton.addEventListener_click(fun _ -> getHexValue(); null)
 
 
 

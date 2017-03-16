@@ -5,4 +5,7 @@
 #load "./Common/VisualMIPS/datastruct.fs"
 #load "./Common/VisualMIPS/tokeniser.fs"
 #load "./Common/VisualMIPS/parser.fs"
+#load "./Common/VisualMIPS/r_type.fs"
+#load "./Common/VisualMIPS/instructer.fs"
 #load "main.fs"
+
