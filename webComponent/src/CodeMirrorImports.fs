@@ -187,6 +187,7 @@ and [<AllowNullLiteral>] CodeMirrorEditor =
     abstract getGutterElement: unit -> HTMLElement
     abstract getStateAfter: line: obj -> obj
     abstract lastLine: unit -> int
+    
 
 and CodeMirrorOptions = CodeMirrorOptionNames list
    

@@ -109,7 +109,7 @@ module main =
     //     | Some f -> f
     //     | None -> printfn "hello world"
 
-    let z = "AND 1,2,3      # this is a comment!"
+    let z = "AND 1,2,3      # this is a comment!\nAND 1,2,4      # this is a comment!\nAND 1,2,5      # this is a comment!\nAND 1,2,6      # this is a comment!\nAND 1,2,7      # this is a comment!"
 
     cmEditor.setValue z
 
@@ -179,13 +179,46 @@ module main =
 
     // initialisation of non-mutable initial machineState
 
+
+    // BINARY OR HEX OR DECIMAL HANDLER
+
+
+    let updateRegisterValuesInHTML (mach : MachineState) =
+        let getIDAndUpdateRegisterValue (registerNumber : int) (result : string) =
+            printfn "debugging this - %A" (string(registerNumber))
+            let HTMLRegister = getById<Browser.HTMLElement>("mipsRegister"+string(registerNumber))
+            HTMLRegister.innerHTML <- result
+        for i in 0..31 do
+            match mach.RegMap.[Register(i)] with 
+            | Word m -> getIDAndUpdateRegisterValue i (string(m))
+            | _ -> failwithf "unknown value"
+        
+    let updateProgramCounterInHTML (mach : MachineState) = 
+        let PC = getById<Browser.HTMLElement>("mipsRegister-1")
+        let nextPC = getById<Browser.HTMLElement>("mipsRegister-2")
+        let nextNextPC = getById<Browser.HTMLElement>("mipsRegister-3")
+        
+        match mach.pc with
+        | Word x -> PC.innerHTML <- string(x)
+
+        match mach.pcNext with 
+        | Word x -> nextPC.innerHTML <- string(x)
+
+        match mach.pcNextNext with
+        | Some x -> nextNextPC.innerHTML <- string(x)
+        | None -> nextNextPC.innerHTML <- "null"
+
+
     let mutable globalMachineStates= new Dictionary<string, MachineState>()
-    globalMachineStates.["line-1"] <- initialise
+    globalMachineStates.["line-1"] <- initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u)
 
     printfn "init example - %A" initialise
     printfn "from dictionary - %A" globalMachineStates
 
-    
+    updateRegisterValuesInHTML globalMachineStates.["line-1"]
+    updateProgramCounterInHTML globalMachineStates.["line-1"]
+
+    // updateRegisterValuesInHTML (getCurrentMachineState (currentLine-1))
     let updateGlobalMachineState (currentLine : int) (mach : MachineState) =
         globalMachineStates.["line"+string(currentLine)] <- mach
 
@@ -280,25 +313,23 @@ module main =
             let codeMirrorText = cmEditor.getLine currentLine
             let input = tokenise codeMirrorText
             let instruction = parse input
+
             (getCurrentMachineState (currentLine-1))
-            |> setReg (Register 1) (Word 32u)
-            |> setReg (Register 2) (Word 32u)
             |> executeInstruction instruction
             |> updateGlobalMachineState currentLine
 
             printLogAndUpdateRegisters currentLine
 
-
             // if codeMirrorText <> "" then printfn "Instr: %A" (checkType input)
         let rec processAllCodeMirrorInput (startLine : int) (lastLine : int) = if startLine=lastLine then eachLineProcessing lastLine else eachLineProcessing startLine; processAllCodeMirrorInput (startLine+1) lastLine
         processAllCodeMirrorInput 0 (cmEditor.lastLine())
 
-        // TODO: update register values according to the lastLine
+
 
     
-    // executeButtonHandler calls executeHandler() starts from the first line
-    // this might be redundant / add logic to modify register HTML
-    let executeButtonHandler() = "0"
+    // TODO: update register/PC values according to the lastLine
+    // PROBLEM : if last line is an empty line - doesn't work
+    let executeButtonHandler() = updateRegisterValuesInHTML (getCurrentMachineState (cmEditor.lastLine())) ; updateProgramCounterInHTML (getCurrentMachineState (cmEditor.lastLine()))
 
     // just set all registers to 0 graphically, set machine state to initialise?
     let resetButtonHandler() = 
@@ -317,17 +348,35 @@ module main =
         modifyRegisterInHTML HTMLRegister12 "0"
         errorLog.innerHTML <- ""
     // checks if executeHandler() has been called considering that current CodeMirror text editor content has not change,if changed, call execute
-    let stepBackwardsButtonHandler() = "2"
-    // checks if executeHandler() has been called considering that current CodeMirror text editor content has not change
-    let stepForwardsButtonHandler() = "3"
+
+
+    // logic - 1. getCurrentLine 2. get dict from previous line 3. update HTML 4. move cursor to one line back
+    let stepBackwardsButtonHandler() = 
+        let currentLine  = cmEditor.getCursor()
+        // printfn "value of asdasdsadsadas %A" currentLine.line
+        // let myObject = {ch = 0;line = 1}
+        // cmEditor.setCursor myObject
+        let previousMachineState : MachineState = globalMachineStates.["line"+string(currentLine.line-1.0)]
+        updateRegisterValuesInHTML (previousMachineState)
+        updateProgramCounterInHTML (previousMachineState)
+        currentLine.line <- currentLine.line - 1.0
+        cmEditor.setCursor currentLine
+
+    let stepForwardsButtonHandler() = 
+        let currentLine  = cmEditor.getCursor()
+        let nextMachineState : MachineState = globalMachineStates.["line"+string(currentLine.line)]
+        updateRegisterValuesInHTML (nextMachineState)
+        updateProgramCounterInHTML (nextMachineState)
+        currentLine.line <- currentLine.line + 1.0
+        cmEditor.setCursor currentLine
 
     // final result : each of these buttons will call a function like : executeButtonHandler(), resetButtonHandler(), stepBackwardsButtonHandler() and stepForwardsButtonHandler()
 
     // how to convert string / types to HTMLRegister0 , use match x with "register0" -> HTMLRegister0
-    executeButton.addEventListener_click(fun _ -> executeHandler(); null)
+    executeButton.addEventListener_click(fun _ -> executeHandler();executeButtonHandler(); null)
     resetButton.addEventListener_click(fun _ -> resetButtonHandler(); null)
-    stepBackwardsButton.addEventListener_click(fun _ -> modifyRegisterInHTML HTMLRegister2 "101010101010101"; null)
-    stepForwardsButton.addEventListener_click(fun _ -> modifyRegisterInHTML HTMLRegister3 "101010101010101"; null)
+    stepBackwardsButton.addEventListener_click(fun _ -> executeHandler();stepBackwardsButtonHandler(); null)
+    stepForwardsButton.addEventListener_click(fun _ -> executeHandler();stepForwardsButtonHandler(); null)
 
 
     // BUTTONS

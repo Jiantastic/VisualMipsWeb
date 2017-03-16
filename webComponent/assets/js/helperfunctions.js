@@ -143,19 +143,41 @@ function mipsRegisterDecimal2Hex(registerNumber){
     mipsRegisterHexButton.className = "btn waves-effect waves-light red"
 }
 
-var mipsRegister0Active = "binary"
-var mipsRegister1Active = "binary"
-var mipsRegister2Active = "binary"
-var mipsRegister3Active = "binary"
-var mipsRegister4Active = "binary"
-var mipsRegister5Active = "binary"
-var mipsRegister6Active = "binary"
-var mipsRegister7Active = "binary"
-var mipsRegister8Active = "binary"
-var mipsRegister9Active = "binary"
-var mipsRegister10Active = "binary"
-var mipsRegister11Active = "binary"
-var mipsRegister12Active = "binary"
+var mipsRegister0Active = "decimal"
+var mipsRegister1Active = "decimal"
+var mipsRegister2Active = "decimal"
+var mipsRegister3Active = "decimal"
+var mipsRegister4Active = "decimal"
+var mipsRegister5Active = "decimal"
+var mipsRegister6Active = "decimal"
+var mipsRegister7Active = "decimal"
+var mipsRegister8Active = "decimal"
+var mipsRegister9Active = "decimal"
+var mipsRegister10Active = "decimal"
+var mipsRegister11Active = "decimal"
+var mipsRegister12Active = "decimal"
+var mipsRegister13Active = "decimal"
+var mipsRegister14Active = "decimal"
+var mipsRegister15Active = "decimal"
+var mipsRegister16Active = "decimal"
+var mipsRegister17Active = "decimal"
+var mipsRegister18Active = "decimal"
+var mipsRegister19Active = "decimal"
+var mipsRegister20Active = "decimal"
+var mipsRegister21Active = "decimal"
+var mipsRegister22Active = "decimal"
+var mipsRegister23Active = "decimal"
+var mipsRegister24Active = "decimal"
+var mipsRegister25Active = "decimal"
+var mipsRegister26Active = "decimal"
+var mipsRegister27Active = "decimal"
+var mipsRegister28Active = "decimal"
+var mipsRegister29Active = "decimal"
+var mipsRegister30Active = "decimal"
+var mipsRegister31Active = "decimal"
+var programCounter = "decimal"
+var nextProgramCounter = "decimal"
+var nextNextProgramCounter = "decimal"
 
 function subButtonLogicHandler(registerNumber,currentActiveState){
 
@@ -186,6 +208,50 @@ function subButtonLogicHandler(registerNumber,currentActiveState){
             mipsRegister11Active = currentActiveState; break;
         case 12:
             mipsRegister12Active = currentActiveState; break;
+        case 13:
+            mipsRegister13Active = currentActiveState; break;
+        case 14:
+            mipsRegister14Active = currentActiveState; break;
+        case 15:
+            mipsRegister15Active = currentActiveState; break;
+        case 16:
+            mipsRegister16Active = currentActiveState; break;
+        case 17:
+            mipsRegister17Active = currentActiveState; break;
+        case 18:
+            mipsRegister18Active = currentActiveState; break;
+        case 19:
+            mipsRegister19Active = currentActiveState; break;
+        case 20:
+            mipsRegister20Active = currentActiveState; break;
+        case 21:
+            mipsRegister21Active = currentActiveState; break;
+        case 22:
+            mipsRegister22Active = currentActiveState; break;
+        case 23:
+            mipsRegister23Active = currentActiveState; break;
+        case 24:
+            mipsRegister24Active = currentActiveState; break;
+        case 25:
+            mipsRegister25Active = currentActiveState; break;
+        case 26:
+            mipsRegister26Active = currentActiveState; break;
+        case 27:
+            mipsRegister27Active = currentActiveState; break;
+        case 28:
+            mipsRegister28Active = currentActiveState; break;
+        case 29:
+            mipsRegister29Active = currentActiveState; break;
+        case 30:
+            mipsRegister30Active = currentActiveState; break;
+        case 31:
+            mipsRegister31Active = currentActiveState; break;
+        case -1:
+            programCounter = currentActiveState; break;
+        case -2:
+            nextProgramCounter = currentActiveState; break;
+        case -3:
+            nextNextProgramCounter = currentActiveState; break;
         default: 
             break;
     }
@@ -219,6 +285,50 @@ function getMIPSRegisterLogicHandler(registerNumber){
             return mipsRegister11Active
         case 12:
             return mipsRegister12Active
+        case 13:
+            return mipsRegister13Active
+        case 14:
+            return mipsRegister14Active
+        case 15:
+            return mipsRegister15Active
+        case 16:
+            return mipsRegister16Active
+        case 17:
+            return mipsRegister17Active
+        case 18:
+            return mipsRegister18Active
+        case 19:
+            return mipsRegister19Active
+        case 20:
+            return mipsRegister20Active
+        case 21:
+            return mipsRegister21Active
+        case 22:
+            return mipsRegister22Active
+        case 23:
+            return mipsRegister23Active
+        case 24:
+            return mipsRegister24Active
+        case 25:
+            return mipsRegister25Active
+        case 26:
+            return mipsRegister26Active
+        case 27:
+            return mipsRegister27Active
+        case 28:
+            return mipsRegister28Active
+        case 29:
+            return mipsRegister29Active
+        case 30:
+            return mipsRegister30Active
+        case 31:
+            return mipsRegister31Active
+        case -1:
+            return programCounter
+        case -2:
+            return nextProgramCounter
+        case -3:
+            return nextNextProgramCounter
         default: 
             break;
     }
@@ -268,4 +378,10 @@ window.onload = function() {
     if (navigator.appVersion.indexOf("Linux")!=-1) OSName="Linux";
     var e = document.getElementById('operatingSystem')
     e.innerHTML = "<br>Your OS : " + OSName;
+}
+
+function setToDecimal(){
+    for(i=-3 ; i<32;i ++){
+        buttonLogicHandler(i,"decimal");
+    }
 }
