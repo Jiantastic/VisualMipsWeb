@@ -72,8 +72,8 @@ function mipsRegisterBinary2Hex(registerNumber){
 
     mipsRegister.innerHTML = (ConvertBase.bin2hex(mipsRegister.innerHTML)).toUpperCase()
     
-    mipsRegisterBinaryButton.className = "btn waves-effect waves-light black"
-    mipsRegisterHexButton.className = "btn waves-effect waves-light red"
+    mipsRegisterBinaryButton.className = "btn waves-effect waves-light black btn-small"
+    mipsRegisterHexButton.className = "btn waves-effect waves-light red btn-small"
 }
 
 // Binary -> Decimal
@@ -85,8 +85,8 @@ function mipsRegisterBinary2Decimal(registerNumber){
 
     mipsRegister.innerHTML = ConvertBase.bin2dec(mipsRegister.innerHTML)
     
-    mipsRegisterBinaryButton.className = "btn waves-effect waves-light black"
-    mipsRegisterDecimalButton.className = "btn waves-effect waves-light red"
+    mipsRegisterBinaryButton.className = "btn waves-effect waves-light black btn-small"
+    mipsRegisterDecimalButton.className = "btn waves-effect waves-light red btn-small"
 }
 
 
@@ -100,8 +100,8 @@ function mipsRegisterHex2Binary(registerNumber){
 
     mipsRegister.innerHTML = ConvertBase.hex2bin(mipsRegister.innerHTML)
     
-    mipsRegisterHexButton.className = "btn waves-effect waves-light black"
-    mipsRegisterBinaryButton.className = "btn waves-effect waves-light red"
+    mipsRegisterHexButton.className = "btn waves-effect waves-light black btn-small"
+    mipsRegisterBinaryButton.className = "btn waves-effect waves-light red btn-small"
 }
 // Hex -> Decimal
 function mipsRegisterHex2Decimal(registerNumber){
@@ -112,8 +112,8 @@ function mipsRegisterHex2Decimal(registerNumber){
 
     mipsRegister.innerHTML = ConvertBase.hex2dec(mipsRegister.innerHTML)
     
-    mipsRegisterHexButton.className = "btn waves-effect waves-light black"
-    mipsRegisterDecimalButton.className = "btn waves-effect waves-light red"
+    mipsRegisterHexButton.className = "btn waves-effect waves-light black btn-small"
+    mipsRegisterDecimalButton.className = "btn waves-effect waves-light red btn-small"
 }
 
 
@@ -127,8 +127,8 @@ function mipsRegisterDecimal2Binary(registerNumber){
 
     mipsRegister.innerHTML = ConvertBase.dec2bin(mipsRegister.innerHTML)
     
-    mipsRegisterDecimalButton.className = "btn waves-effect waves-light black"
-    mipsRegisterBinaryButton.className = "btn waves-effect waves-light red"
+    mipsRegisterDecimalButton.className = "btn waves-effect waves-light black btn-small"
+    mipsRegisterBinaryButton.className = "btn waves-effect waves-light red btn-small"
 }
 // Decimal -> Hex
 function mipsRegisterDecimal2Hex(registerNumber){
@@ -139,8 +139,8 @@ function mipsRegisterDecimal2Hex(registerNumber){
 
     mipsRegister.innerHTML = (ConvertBase.dec2hex(mipsRegister.innerHTML)).toUpperCase()
     
-    mipsRegisterDecimalButton.className = "btn waves-effect waves-light black"
-    mipsRegisterHexButton.className = "btn waves-effect waves-light red"
+    mipsRegisterDecimalButton.className = "btn waves-effect waves-light black btn-small"
+    mipsRegisterHexButton.className = "btn waves-effect waves-light red btn-small"
 }
 
 var mipsRegister0Active = "decimal"
@@ -178,6 +178,8 @@ var mipsRegister31Active = "decimal"
 var programCounter = "decimal"
 var nextProgramCounter = "decimal"
 var nextNextProgramCounter = "decimal"
+var hi = "decimal"
+var lo = "decimal"
 
 function subButtonLogicHandler(registerNumber,currentActiveState){
 
@@ -252,6 +254,10 @@ function subButtonLogicHandler(registerNumber,currentActiveState){
             nextProgramCounter = currentActiveState; break;
         case -3:
             nextNextProgramCounter = currentActiveState; break;
+        case -4:
+            hi = currentActiveState; break;
+        case -5:
+            lo = currentActiveState; break;
         default: 
             break;
     }
@@ -329,6 +335,10 @@ function getMIPSRegisterLogicHandler(registerNumber){
             return nextProgramCounter
         case -3:
             return nextNextProgramCounter
+        case -4:
+            return hi
+        case -5:
+            return lo
         default: 
             break;
     }
@@ -381,7 +391,7 @@ window.onload = function() {
 }
 
 function setToDecimal(){
-    for(i=-3 ; i<32;i ++){
+    for(i=-5 ; i<32;i ++){
         buttonLogicHandler(i,"decimal");
     }
 }

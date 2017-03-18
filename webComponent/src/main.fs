@@ -1,18 +1,22 @@
 (* 
 
-How does STEP FORWARD, STEP BACKWARD works?
+// BUGS TO FIX:
 
-we need to store the states of all steps in HTML5 localStorage
+Wei: bug report; stepping forwards 3 times and then backwards 3 times does not lead output to be as expected.
+
+Empty line results in error
 
 
-Codemirror todo: https://codemirror.net/doc/manual.html
+// TODO:
+
+1. Code point on line = for step forward/backward
+2. Hi and Lo for PC
+
+
 
 add sublime code bindings
-add search cursor - http://codemirror.net/doc/manual.html#addons
 
-// ADD CODEMIRROR bindings to F#, able to access Codemirror API via F#!
 
-Codemirror.getline -> lex() -> parse() -> execute() -> save state in localStorage
 
 *)
 // BROWSER DOCUMENTATION -> https://github.com/fable-compiler/Fable/blob/master/src/fable/Fable.Core/Import/Fable.Import.Browser.fs
@@ -23,17 +27,9 @@ Codemirror.getline -> lex() -> parse() -> execute() -> save state in localStorag
     2. Input forms for Register values so user can manipulate them freely
 
     UI TODO:
-    Program counter 
-    PCNext
-    multiple tabs for registers - follow this example probably http://rivoire.cs.sonoma.edu/cs351/wemips/
     speed slider for execute, slowly go step by step (highlight registers that are being changed)
 
     step forward for jumps might be complicated
-
-    More TODOS:
-
-    Ben and Tom will show errors in its code if there is an error
-
 
     Codemirror TODO:
     How to highlight current line / any given line when an error happens
@@ -59,9 +55,6 @@ open Tokeniser
 open MachineState
 open Executor
 
-// Dictionaries
-open System.Collections.Generic
-
 module main = 
 
     // load and save data from browser local storage
@@ -83,24 +76,27 @@ module main =
 
     // saving data format -> key : string, value : Record OR Union type
 
-    // API to save/load to HTML5 localStorage
-    let saveToLocalStorage arg1 arg2 = Util.save arg1 arg2
+    // API to save/load to HTML5 localStorage - use key : string , value : string ONLY
+    // Util.save arg1 arg2
+    // Util.load arg1
 
-    // loading data format -> key : string
-    let loadFromLocalStorage arg1 = Util.load arg1
     let editId = getById<Browser.HTMLTextAreaElement>("editor")
-
+    let executeButton = getById<Browser.HTMLButtonElement>("execute")
+    let resetButton = getById<Browser.HTMLButtonElement>("reset")
+    let stepBackwardsButton = getById<Browser.HTMLButtonElement>("stepBackwards")
+    let stepForwardsButton =  getById<Browser.HTMLButtonElement>("stepForwards")
+    let errorLog = getById<Browser.HTMLDivElement>("errorLog")
     let cmEditor = App.CodeMirrorImports.CodeMirror.fromTextArea(editId, initOptions)
 
-    saveToLocalStorage "hello" "world"
+    // saveToLocalStorage "hello" "world"
 
 
-    // THIS FUCKING WORKS
+
     // add None handler to complete match statements
-    let getValue = 
-        let q : Option<string> = loadFromLocalStorage "hello"
-        match q with 
-        | Some x -> x 
+    // let getValue = 
+    //     let q : Option<string> = loadFromLocalStorage "hello"
+    //     match q with 
+    //     | Some x -> x 
 
 
     // let ff = 
@@ -109,53 +105,13 @@ module main =
     //     | Some f -> f
     //     | None -> printfn "hello world"
 
-    let z = "AND 1,2,3      # this is a comment!\nAND 1,2,4      # this is a comment!\nAND 1,2,5      # this is a comment!\nAND 1,2,6      # this is a comment!\nAND 1,2,7      # this is a comment!"
+    let initialValue = "AND 1,2,3      # this is a comment!\nAND 1,2,4      # this is a comment!\nAND 1,2,5      # this is a comment!\nAND 1,2,6      # this is a comment!\nAND 1,2,7      # this is a comment!"
 
-    cmEditor.setValue z
-
-
-    // TODO : algorithm to traverse code
-    // go through code line by line while less than or equal to myCodeMirror.lastLine()
-    // for each line, do lex(), parse(), execute() BASED ON information of previous line, then store result in HTML5 local Storage in the form where key : "line" + <current_line_number>, "value" : registerState Record type
-    let mm = cmEditor.getLine 0
-
-    //printfn "value of first line is %A" mm
+    cmEditor.setValue initialValue
 
     // HTML elements definitions
-    let executeButton = getById<Browser.HTMLButtonElement>("execute")
-    let resetButton = getById<Browser.HTMLButtonElement>("reset")
-    let stepBackwardsButton = getById<Browser.HTMLButtonElement>("stepBackwards")
-    let stepForwardsButton =  getById<Browser.HTMLButtonElement>("stepForwards")
-    let errorLog = getById<Browser.HTMLDivElement>("errorLog")
-    let HTMLRegister0 = getById<Browser.HTMLElement>("mipsRegister0")
-    let HTMLRegister1 = getById<Browser.HTMLElement>("mipsRegister1")
-    let HTMLRegister2 = getById<Browser.HTMLElement>("mipsRegister2")
-    let HTMLRegister3 = getById<Browser.HTMLElement>("mipsRegister3")
-    let HTMLRegister4 = getById<Browser.HTMLElement>("mipsRegister4")
-    let HTMLRegister5 = getById<Browser.HTMLElement>("mipsRegister5")
-    let HTMLRegister6 = getById<Browser.HTMLElement>("mipsRegister6")
-    let HTMLRegister7 = getById<Browser.HTMLElement>("mipsRegister7")
-    let HTMLRegister8 = getById<Browser.HTMLElement>("mipsRegister8")
-    let HTMLRegister9 = getById<Browser.HTMLElement>("mipsRegister9")
-    let HTMLRegister10 = getById<Browser.HTMLElement>("mipsRegister10")
-    let HTMLRegister11 = getById<Browser.HTMLElement>("mipsRegister11")
-    let HTMLRegister12 = getById<Browser.HTMLElement>("mipsRegister12")
 
 
-
-    let modifyRegisterInHTML (register : Fable.Import.Browser.HTMLElement) (registerValue : string) = 
-        register.innerHTML <- registerValue
-
-
-    // update based on match statements, if register 1 -> ...., if register 2 -> ......
-    // if match statement returns an error, show an error popup
-
-    // IMPORTANT : write 2 helper functions
-    // 1. get all lines, one line at a time
-    // 2. code to parse MachineState
-
-    // use a map function, call executeHandler(input :string) for each line
-    
 
     (*
     type RunState = 
@@ -175,19 +131,14 @@ module main =
         }
     *)
 
-    // MAIN FUNCTION : feed inputs line by line codeMirror.getLine, all buttonHandlers call the executeHandler(), calls lex() -> calls parse() -> calls execute() -> save in HTML5 local Storage
-
-    // initialisation of non-mutable initial machineState
 
 
-    // BINARY OR HEX OR DECIMAL HANDLER
 
+    let getIDAndUpdateRegisterValue (registerNumber : int) (result : string) =
+        let HTMLRegister = getById<Browser.HTMLElement>("mipsRegister"+string(registerNumber))
+        HTMLRegister.innerHTML <- result
 
     let updateRegisterValuesInHTML (mach : MachineState) =
-        let getIDAndUpdateRegisterValue (registerNumber : int) (result : string) =
-            printfn "debugging this - %A" (string(registerNumber))
-            let HTMLRegister = getById<Browser.HTMLElement>("mipsRegister"+string(registerNumber))
-            HTMLRegister.innerHTML <- result
         for i in 0..31 do
             match mach.RegMap.[Register(i)] with 
             | Word m -> getIDAndUpdateRegisterValue i (string(m))
@@ -209,35 +160,12 @@ module main =
         | None -> nextNextPC.innerHTML <- "null"
 
 
-    let mutable globalMachineStates= new Dictionary<string, MachineState>()
-    globalMachineStates.["line-1"] <- initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u)
+    let mutable currentMachineState : MachineState = initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u)
 
-    printfn "init example - %A" initialise
-    printfn "from dictionary - %A" globalMachineStates
-
-    updateRegisterValuesInHTML globalMachineStates.["line-1"]
-    updateProgramCounterInHTML globalMachineStates.["line-1"]
-
-    // updateRegisterValuesInHTML (getCurrentMachineState (currentLine-1))
-    let updateGlobalMachineState (currentLine : int) (mach : MachineState) =
-        globalMachineStates.["line"+string(currentLine)] <- mach
-
-    // returns the current machineState for a given line number
-    // use map instead of HTML5 localStorage probs? - more transferable
-    // let getCurrentMachineState (currentLineNumber : int) =
-    //     printfn "wtf is going on here"
-    //     match loadFromLocalStorage ("line"+string(currentLineNumber)) with 
-    //     | Some x -> x
-    //     | _ -> failwithf "error loading machine state from HTML5 localStorage"
-
-    let getCurrentMachineState (currentLineNumber : int) =
-
-        globalMachineStates.["line"+string(currentLineNumber)]
-
+    updateRegisterValuesInHTML currentMachineState
+    updateProgramCounterInHTML currentMachineState
 
     let printLogAndUpdateRegisters (currentLineNumber : int) =
-        // let getPCValue = getPC globalMachineState
-        // match 
         let machStateToString (mach:MachineState) = 
             match mach.State with 
             | RunOK -> "RunOK"
@@ -275,108 +203,146 @@ module main =
                 | Word m -> errorLog.insertAdjacentHTML("beforeend","R"+string(i) + "=" + string(m) + "   ")
             
 
-        errorLog.insertAdjacentHTML ("beforeend","<p>Line " + string(currentLineNumber) + ": " + (cmEditor.getLine currentLineNumber) + " " + machStateToString (getCurrentMachineState currentLineNumber) + " " + "</p>")
-        errorLog.insertAdjacentHTML ("beforeend","<p>" + (hiToString (getCurrentMachineState currentLineNumber)) + " " + (loToString (getCurrentMachineState currentLineNumber)) + " " + (pcToString (getCurrentMachineState currentLineNumber)) + " " + (nextPCToString (getCurrentMachineState currentLineNumber)) + " " + (nextNextPCToString (getCurrentMachineState currentLineNumber)) + "</p>")
+        errorLog.insertAdjacentHTML ("beforeend","<p>Line " + string(currentLineNumber+1) + ": " + (cmEditor.getLine currentLineNumber) + " " + machStateToString currentMachineState + " " + "</p>")
+        errorLog.insertAdjacentHTML ("beforeend","<p>" + (hiToString currentMachineState) + " " + (loToString currentMachineState) + " " + (pcToString currentMachineState) + " " + (nextPCToString currentMachineState) + " " + (nextNextPCToString currentMachineState) + "</p>")
 
-        registerStateToString (getCurrentMachineState currentLineNumber)
+        registerStateToString currentMachineState
         
-    let executeHandler() = 
-        // NOTE : there probably has to be a global machine state that I must reference, I should probably instantiate that global MachineState here
-        // main code body which holds the lex() -> parse() -> execute() stage, return MachineState
-        // TODO : saving MachineState into HTML5 localStorage via saveToLocalStorage and loadToLocalStorage methods
 
-        // eachLineProcessing returns a machine state that is used as the next input
+    let setCurrentMachineState (mach : MachineState) = 
+        printfn "before"
+        printState currentMachineState |> ignore
+        currentMachineState <- mach
+        printfn "afterrrrrrr"
+        printState currentMachineState |> ignore
+        
 
-        // when executeHandler is called, we save the content of the text editor to HTML5 localStorage
+    // error handler, print to Log 
+    let fail (msg: string) (line: int) =
+        let msgs = msg.Split('\n')
+        let found = msgs.[0].IndexOf(": ");
+        let message = msgs.[0].Substring(found+2)
+        printfn "Line %i: %s" line message
+        errorLog.insertAdjacentHTML("beforeend","<p>Line " + string(line+1) + ": " + message + "</p>")
+        failwith "Parser Error!" // Replace with whatever should come up in JS Console
 
-        // let eachLineProcessing (currentLine : int) (currentMachineState : MachineState) =
-        //     printfn "wtf is going on here 2 - %A" currentMachineState
-        //     let codeMirrorText = cmEditor.getLine currentLine;
-        //     let input = tokenise codeMirrorText;
-        //     let instruction = parse input
-        //     printfn "aaaa"
-        //     currentMachineState 
-        //     |> setReg (Register 1) (Word 32u)
-        //     |> setReg (Register 2) (Word 32u)
-        //     |> executeInstruction instruction
-        //     |> saveToLocalStorage "line1"
+    let eachLineProcessing (mach : MachineState) (currentLine : int)  =
+        // TODO : ignore empty lines!
+        let codeMirrorText = cmEditor.getLine currentLine
 
-        //     printfn "after this?"
-        //     printLogAndUpdateRegisters currentLine
+        if codeMirrorText = "" then ()
 
-        //     // if codeMirrorText <> "" then printfn "Instr: %A" (checkType input)
-        // let rec processAllCodeMirrorInput (startLine : int) (lastLine : int) = if startLine=lastLine then eachLineProcessing lastLine (getCurrentMachineState lastLine) else eachLineProcessing startLine (getCurrentMachineState startLine); processAllCodeMirrorInput (startLine+1) lastLine
-        // processAllCodeMirrorInput 0 (cmEditor.lastLine())
+        else
 
-
-        let eachLineProcessing (currentLine : int) =
-            let codeMirrorText = cmEditor.getLine currentLine
-            let input = tokenise codeMirrorText
-            let instruction = parse input
-
-            (getCurrentMachineState (currentLine-1))
-            |> executeInstruction instruction
-            |> updateGlobalMachineState currentLine
-
-            printLogAndUpdateRegisters currentLine
-
-            // if codeMirrorText <> "" then printfn "Instr: %A" (checkType input)
-        let rec processAllCodeMirrorInput (startLine : int) (lastLine : int) = if startLine=lastLine then eachLineProcessing lastLine else eachLineProcessing startLine; processAllCodeMirrorInput (startLine+1) lastLine
-        processAllCodeMirrorInput 0 (cmEditor.lastLine())
+        let input = tokenise codeMirrorText
+        let instruction = 
+            try parse input
+            with | msg -> fail (string msg) currentLine
 
 
+        /// Prints Parser Error message before ending program
+
+
+        mach
+        |> executeInstruction instruction
+        |> setCurrentMachineState
+        |> ignore
+
+        printLogAndUpdateRegisters currentLine
+    let rec processAllCodeMirrorInput (startLine : int) (lastLine : int) = if startLine=lastLine then eachLineProcessing currentMachineState lastLine else eachLineProcessing currentMachineState startLine; processAllCodeMirrorInput (startLine+1) lastLine
 
     
     // TODO: update register/PC values according to the lastLine
     // PROBLEM : if last line is an empty line - doesn't work
-    let executeButtonHandler() = updateRegisterValuesInHTML (getCurrentMachineState (cmEditor.lastLine())) ; updateProgramCounterInHTML (getCurrentMachineState (cmEditor.lastLine()))
+    let executeButtonHandler() = 
+        setCurrentMachineState (initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u)|> setReg (Register 23) (Word 32u))
+        processAllCodeMirrorInput 0 (cmEditor.lastLine())
+        updateRegisterValuesInHTML currentMachineState 
+        updateProgramCounterInHTML currentMachineState
 
-    // just set all registers to 0 graphically, set machine state to initialise?
+    // just set all registers/PC to 0 graphically, clears log
     let resetButtonHandler() = 
-        modifyRegisterInHTML HTMLRegister0 "0"
-        modifyRegisterInHTML HTMLRegister1 "0"
-        modifyRegisterInHTML HTMLRegister2 "0"
-        modifyRegisterInHTML HTMLRegister3 "0"
-        modifyRegisterInHTML HTMLRegister4 "0"
-        modifyRegisterInHTML HTMLRegister5 "0"
-        modifyRegisterInHTML HTMLRegister6 "0"
-        modifyRegisterInHTML HTMLRegister7 "0"
-        modifyRegisterInHTML HTMLRegister8 "0"
-        modifyRegisterInHTML HTMLRegister9 "0"
-        modifyRegisterInHTML HTMLRegister10 "0"
-        modifyRegisterInHTML HTMLRegister11 "0"
-        modifyRegisterInHTML HTMLRegister12 "0"
+        for i in -5..31 do
+            getIDAndUpdateRegisterValue i "0"
         errorLog.innerHTML <- ""
     // checks if executeHandler() has been called considering that current CodeMirror text editor content has not change,if changed, call execute
 
 
     // logic - 1. getCurrentLine 2. get dict from previous line 3. update HTML 4. move cursor to one line back
     let stepBackwardsButtonHandler() = 
+        setCurrentMachineState (initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u))
         let currentLine  = cmEditor.getCursor()
-        // printfn "value of asdasdsadsadas %A" currentLine.line
-        // let myObject = {ch = 0;line = 1}
-        // cmEditor.setCursor myObject
-        let previousMachineState : MachineState = globalMachineStates.["line"+string(currentLine.line-1.0)]
-        updateRegisterValuesInHTML (previousMachineState)
-        updateProgramCounterInHTML (previousMachineState)
-        currentLine.line <- currentLine.line - 1.0
+        currentLine.line <- cmEditor.getCursor().line
+        
+
+        match currentLine.line with 
+        | 0 -> resetButtonHandler()
+        | _ -> processAllCodeMirrorInput 0 (currentLine.line-1)
+
+        updateRegisterValuesInHTML currentMachineState
+        updateProgramCounterInHTML currentMachineState
+        currentLine.line <- currentLine.line - 1
+
         cmEditor.setCursor currentLine
 
+        printfn "what is the current line number Step back - %A" currentLine.line
+        
+
     let stepForwardsButtonHandler() = 
+        setCurrentMachineState (initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u))
         let currentLine  = cmEditor.getCursor()
-        let nextMachineState : MachineState = globalMachineStates.["line"+string(currentLine.line)]
-        updateRegisterValuesInHTML (nextMachineState)
-        updateProgramCounterInHTML (nextMachineState)
-        currentLine.line <- currentLine.line + 1.0
         cmEditor.setCursor currentLine
+        
+        processAllCodeMirrorInput 0 (currentLine.line)
+
+        updateRegisterValuesInHTML currentMachineState
+        updateProgramCounterInHTML currentMachineState
+        
+        if currentLine.line = 0 
+        then
+            currentLine.line <- currentLine.line + 1
+        else
+            cmEditor.setCursor currentLine 
+            currentLine.line <- currentLine.line + 1
+            
+        printfn "what is the current line number Step forward - %A" currentLine.line
+
+
+    // let stepBackwardsButtonHandler() = 
+    //     setCurrentMachineState (initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u))
+    //     let currentLine  = cmEditor.getCursor()
+    //     // printfn "value of asdasdsadsadas %A" currentLine.line
+    //     // let myObject = {ch = 0;line = 1}
+    //     // cmEditor.setCursor myObject
+    //     match currentLine.line with 
+    //     | 0 -> resetButtonHandler()
+    //     | _ -> processAllCodeMirrorInput 0 (currentLine.line-1)
+
+    //     updateRegisterValuesInHTML currentMachineState
+    //     updateProgramCounterInHTML currentMachineState
+    //     currentLine.line <- currentLine.line - 1
+    //     cmEditor.setCursor currentLine
+            
+
+
+    // let stepForwardsButtonHandler() = 
+    //     setCurrentMachineState (initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u))
+    //     let currentLine  = cmEditor.getCursor()
+    //     processAllCodeMirrorInput 0 (currentLine.line)
+
+    //     updateRegisterValuesInHTML currentMachineState
+    //     updateProgramCounterInHTML currentMachineState
+    
+    //     currentLine.line <- currentLine.line + 1
+    //     cmEditor.setCursor currentLine
 
     // final result : each of these buttons will call a function like : executeButtonHandler(), resetButtonHandler(), stepBackwardsButtonHandler() and stepForwardsButtonHandler()
 
     // how to convert string / types to HTMLRegister0 , use match x with "register0" -> HTMLRegister0
-    executeButton.addEventListener_click(fun _ -> executeHandler();executeButtonHandler(); null)
+    executeButton.addEventListener_click(fun _ -> executeButtonHandler(); null)
     resetButton.addEventListener_click(fun _ -> resetButtonHandler(); null)
-    stepBackwardsButton.addEventListener_click(fun _ -> executeHandler();stepBackwardsButtonHandler(); null)
-    stepForwardsButton.addEventListener_click(fun _ -> executeHandler();stepForwardsButtonHandler(); null)
+    stepBackwardsButton.addEventListener_click(fun _ -> stepBackwardsButtonHandler(); null)
+    stepForwardsButton.addEventListener_click(fun _ -> stepForwardsButtonHandler(); null)
 
 
     // BUTTONS

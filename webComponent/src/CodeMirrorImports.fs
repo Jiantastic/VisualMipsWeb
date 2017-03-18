@@ -49,8 +49,8 @@ and [<AllowNullLiteral>] CodeMirrorCoords =
     abstract yBot: float with get, set
 
 and [<AllowNullLiteral>] CodeMirrorPosition =
-    abstract line: float with get, set
-    abstract ch: float with get, set
+    abstract line: int with get, set
+    abstract ch: int with get, set
 
 and [<AllowNullLiteral>] CodeMirrorHistorySize =
     abstract undo: float with get, set
