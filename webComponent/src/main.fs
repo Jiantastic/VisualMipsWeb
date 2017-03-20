@@ -88,6 +88,8 @@ module main =
     let errorLog = getById<Browser.HTMLDivElement>("errorLog")
     let cmEditor = App.CodeMirrorImports.CodeMirror.fromTextArea(editId, initOptions)
 
+
+    cmEditor.setSize("100%","45%")
     // saveToLocalStorage "hello" "world"
 
 
@@ -105,34 +107,9 @@ module main =
     //     | Some f -> f
     //     | None -> printfn "hello world"
 
-    let initialValue = "AND 1,2,3      # this is a comment!\nAND 1,2,4      # this is a comment!\nAND 1,2,5      # this is a comment!\nAND 1,2,6      # this is a comment!\nAND 1,2,7      # this is a comment!"
+    let initialValue = "ADDI 5,6,11	   # this is a comment!\nAND 1,2,3      # this is a comment!\nAND 1,2,4      # this is a comment!\nAND 1,2,5      # this is a comment!\nAND 1,2,6      # this is a comment!\nAND 1,2,7      # this is a comment!"
 
     cmEditor.setValue initialValue
-
-    // HTML elements definitions
-
-
-
-    (*
-    type RunState = 
-        | RunOK
-        | RunTimeErr of string
-        | SyntaxErr of string
-        
-    type MachineState = 
-        { 
-        RegMap : Map<Register, uint32>
-        Hi : uint32
-        Lo : uint32
-        MemMap : Map<Memory, uint32> 
-        State : RunState
-        pc : uint32
-        pcNext : uint32
-        }
-    *)
-
-
-
 
     let getIDAndUpdateRegisterValue (registerNumber : int) (result : string) =
         let HTMLRegister = getById<Browser.HTMLElement>("mipsRegister"+string(registerNumber))
@@ -160,7 +137,7 @@ module main =
         | None -> nextNextPC.innerHTML <- "null"
 
 
-    let mutable currentMachineState : MachineState = initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u)
+    let mutable currentMachineState : MachineState = initialise
 
     updateRegisterValuesInHTML currentMachineState
     updateProgramCounterInHTML currentMachineState
@@ -208,13 +185,8 @@ module main =
 
         registerStateToString currentMachineState
         
-
     let setCurrentMachineState (mach : MachineState) = 
-        printfn "before"
-        printState currentMachineState |> ignore
         currentMachineState <- mach
-        printfn "afterrrrrrr"
-        printState currentMachineState |> ignore
         
 
     // error handler, print to Log 
@@ -227,7 +199,6 @@ module main =
         failwith "Parser Error!" // Replace with whatever should come up in JS Console
 
     let eachLineProcessing (mach : MachineState) (currentLine : int)  =
-        // TODO : ignore empty lines!
         let codeMirrorText = cmEditor.getLine currentLine
 
         if codeMirrorText = "" then ()
@@ -255,7 +226,7 @@ module main =
     // TODO: update register/PC values according to the lastLine
     // PROBLEM : if last line is an empty line - doesn't work
     let executeButtonHandler() = 
-        setCurrentMachineState (initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u)|> setReg (Register 23) (Word 32u))
+        setCurrentMachineState initialise 
         processAllCodeMirrorInput 0 (cmEditor.lastLine())
         updateRegisterValuesInHTML currentMachineState 
         updateProgramCounterInHTML currentMachineState
@@ -270,7 +241,7 @@ module main =
 
     // logic - 1. getCurrentLine 2. get dict from previous line 3. update HTML 4. move cursor to one line back
     let stepBackwardsButtonHandler() = 
-        setCurrentMachineState (initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u))
+        setCurrentMachineState initialise 
         let currentLine  = cmEditor.getCursor()
         currentLine.line <- cmEditor.getCursor().line
         
@@ -289,10 +260,10 @@ module main =
         
 
     let stepForwardsButtonHandler() = 
-        setCurrentMachineState (initialise |> setReg (Register 1) (Word 32u)|> setReg (Register 2) (Word 32u))
+        setCurrentMachineState initialise 
         let currentLine  = cmEditor.getCursor()
         cmEditor.setCursor currentLine
-        
+
         processAllCodeMirrorInput 0 (currentLine.line)
 
         updateRegisterValuesInHTML currentMachineState
