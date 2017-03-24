@@ -1,6 +1,0 @@
-{
-    "projFile": "./test.fsx",
-    "rollup": {
-        "dest": "./dist/bundle.js"
-    }
-}
