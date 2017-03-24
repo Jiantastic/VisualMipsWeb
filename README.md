@@ -5,6 +5,12 @@ Project: Online MIPS1 Instruction Set Emulator
 
 Developed with F# and FABLE
 
+Electron version in electronFiles
+
+Web version in WebComponent
+
+Website -> https://visualmips.github.io/
+
 
 To compile, 
 
