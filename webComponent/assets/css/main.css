@@ -1,6 +1,11 @@
 .btn-small {
-    padding: 0 1.1rem;
+    padding: 0 0.8rem;
 }
+
+td,th{
+    padding:5px 5px;
+}
+
 
 .error-log{
     color: red;

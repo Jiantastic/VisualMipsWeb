@@ -395,4 +395,5 @@ function setToDecimal(){
     for(i=-5 ; i<32;i ++){
         buttonLogicHandler(i,"decimal");
     }
+    $.fn.DataTable.isDataTable("#memory")&&$("#memory").DataTable().clear().destroy(),$.fn.dataTable.ext.errMode="none",setTimeout(function(){$("#memory").DataTable({paging:!1})},1e3)
 }

@@ -200,14 +200,6 @@ function compareUnions(x, y) {
     }
 }
 
-
-
-
-
-function defaultArg(arg, defaultValue, f) {
-    return arg == null ? defaultValue : (f != null ? f(arg) : arg);
-}
-
 function create(pattern, options) {
     var flags = "g";
     flags += options & 1 ? "i" : "";
@@ -352,7 +344,7 @@ function tokFunction(stream, state) {
         ret = "var2";
     } else {
         var activePatternResult130 = function () {
-            var regExpStr = "^(ADDI|ADDIU|ANDI|ORI|XORI|BEQ|BGEZAL|BGEZ|BGTZ|BLEZ|BLTZAL|BLTZ|BNE|LB|LBU|LH|LWL|LW|LWR|SB|SH|SW|LUI|SLTI|SLTIU|JAL|J|ADDU|ADD|AND|OR|SRAV|SRA|SRLV|SRL|SLLV|SLL|SUBU|SUB|XOR|SLTU|SLT|DIVU|DIV|MULTU|MULT|JR|JALR|MFHI|MFLO|MTHI|MTLO)";
+            var regExpStr = "^(ADDIU|ADDI|ANDI|ORI|XORI|BEQ|BGEZAL|BGEZ|BGTZ|BLEZ|BLTZAL|BLTZ|BNE|LB|LBU|LH|LWL|LW|LWR|SB|SH|SW|LUI|SLTI|SLTIU|JAL|J|ADDU|ADD|AND|OR|SRAV|SRA|SRLV|SRL|SLLV|SLL|SUBU|SUB|XOR|SLTU|SLT|DIVU|DIV|MULTU|MULT|JR|JALR|MFHI|MFLO|MTHI|MTLO)";
             return function (stream_1) {
                 return _EatMatch___(regExpStr, stream_1);
             };
@@ -569,7 +561,11 @@ function __failIfNone(res) {
         throw new Error("Seq did not contain any matching element");
     return res;
 }
-
+function toList(xs) {
+    return foldBack$1(function (x, acc) {
+        return new List(x, acc);
+    }, xs, new List());
+}
 
 
 
@@ -619,7 +615,13 @@ function fold$1(f, acc, xs) {
         return acc;
     }
 }
-
+function foldBack$1(f, xs, acc) {
+    var arr = Array.isArray(xs) || ArrayBuffer.isView(xs) ? xs : Array.from(xs);
+    for (var i = arr.length - 1; i >= 0; i--) {
+        acc = f(arr[i], acc, i);
+    }
+    return acc;
+}
 
 
 
@@ -1069,6 +1071,16 @@ function findKey(f, map$$1) {
     return pick$1(function (kv) { return f(kv[0], kv[1]) ? kv[0] : null; }, map$$1);
 }
 
+function map$2(f, xs) {
+    return reverse$1(fold$1(function (acc, x) { return new List(f(x), acc); }, new List(), xs));
+}
+
+
+
+function reverse$1(xs) {
+    return fold$1(function (acc, x) { return new List(x, acc); }, new List(), xs);
+}
+
 var _createClass$1 = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck$1(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1421,6 +1433,7 @@ var Instructions = function (__exports) {
                                                                                                             LB: [],
                                                                                                             LBU: [],
                                                                                                             LH: [],
+                                                                                                            LHU: [],
                                                                                                             LUI: [],
                                                                                                             LW: [],
                                                                                                             LWL: [],
@@ -1431,6 +1444,7 @@ var Instructions = function (__exports) {
                                                                                                             MTLO: [],
                                                                                                             MULT: [],
                                                                                                             MULTU: [],
+                                                                                                            NOR: [],
                                                                                                             OR: [],
                                                                                                             ORI: [],
                                                                                                             SB: [],
@@ -1471,42 +1485,43 @@ var Instructions = function (__exports) {
                   setType("VisualMIPS.Instructions.Opcode", Opcode);
                   var IMap = __exports.IMap = create$1(ofArray([["ADDI", new Opcode("ADDI", [])], ["ADDIU", new Opcode("ADDIU", [])], ["ANDI", new Opcode("ANDI", [])], ["ORI", new Opcode("ORI", [])], ["XORI", new Opcode("XORI", [])], ["SLTI", new Opcode("SLTI", [])], ["SLTIU", new Opcode("SLTIU", [])]]), new GenericComparer(compare));
                   var I_OMap = __exports.I_OMap = create$1(ofArray([["BEQ", new Opcode("BEQ", [])], ["BNE", new Opcode("BNE", [])]]), new GenericComparer(compare));
-                  var I_SMap = __exports.I_SMap = create$1(ofArray([["BGEZ", new Opcode("BGEZ", [])], ["BGEZAL", new Opcode("BGEZAL", [])], ["BLTZAL", new Opcode("BLTZAL", [])]]), new GenericComparer(compare));
-                  var I_SOMap = __exports.I_SOMap = create$1(ofArray([["BGTZ", new Opcode("BGTZ", [])], ["BLEZ", new Opcode("BLEZ", [])], ["BLTZ", new Opcode("BLTZ", [])], ["LUI", new Opcode("LUI", [])]]), new GenericComparer(compare));
-                  var I_BOMap = __exports.I_BOMap = create$1(ofArray([["LB", new Opcode("LB", [])], ["LBU", new Opcode("LBU", [])], ["LH", new Opcode("LH", [])], ["LW", new Opcode("LW", [])], ["LWL", new Opcode("LWL", [])], ["LWR", new Opcode("LWR", [])], ["SB", new Opcode("SB", [])], ["SH", new Opcode("SH", [])], ["SW", new Opcode("SW", [])]]), new GenericComparer(compare));
+                  var I_SMap = __exports.I_SMap = create$1(ofArray([["BGEZ", new Opcode("BGEZ", [])], ["BGEZAL", new Opcode("BGEZAL", [])], ["BLTZ", new Opcode("BLTZ", [])], ["BLTZAL", new Opcode("BLTZAL", [])]]), new GenericComparer(compare));
+                  var I_SOMap = __exports.I_SOMap = create$1(ofArray([["BGTZ", new Opcode("BGTZ", [])], ["BLEZ", new Opcode("BLEZ", [])], ["LUI", new Opcode("LUI", [])]]), new GenericComparer(compare));
+                  var I_BOMap = __exports.I_BOMap = create$1(ofArray([["LB", new Opcode("LB", [])], ["LBU", new Opcode("LBU", [])], ["LH", new Opcode("LH", [])], ["LHU", new Opcode("LHU", [])], ["LW", new Opcode("LW", [])], ["LWL", new Opcode("LWL", [])], ["LWR", new Opcode("LWR", [])], ["SB", new Opcode("SB", [])], ["SH", new Opcode("SH", [])], ["SW", new Opcode("SW", [])]]), new GenericComparer(compare));
                   var JMap = __exports.JMap = create$1(ofArray([["J", new Opcode("J", [])], ["JAL", new Opcode("JAL", [])]]), new GenericComparer(compare));
-                  var RMap = __exports.RMap = create$1(ofArray([["ADD", new Opcode("ADD", [])], ["ADDU", new Opcode("ADDU", [])], ["AND", new Opcode("AND", [])], ["OR", new Opcode("OR", [])], ["SUB", new Opcode("SUB", [])], ["SUBU", new Opcode("SUBU", [])], ["XOR", new Opcode("XOR", [])], ["SLT", new Opcode("SLT", [])], ["SLTU", new Opcode("SLTU", [])], ["DIV", new Opcode("DIV", [])], ["DIVU", new Opcode("DIVU", [])], ["MULT", new Opcode("MULT", [])], ["MULTU", new Opcode("MULTU", [])], ["MFHI", new Opcode("MFHI", [])], ["MFLO", new Opcode("MFLO", [])]]), new GenericComparer(compare));
+                  var RMap = __exports.RMap = create$1(ofArray([["ADD", new Opcode("ADD", [])], ["ADDU", new Opcode("ADDU", [])], ["AND", new Opcode("AND", [])], ["OR", new Opcode("OR", [])], ["NOR", new Opcode("NOR", [])], ["SUB", new Opcode("SUB", [])], ["SUBU", new Opcode("SUBU", [])], ["XOR", new Opcode("XOR", [])], ["SLT", new Opcode("SLT", [])], ["SLTU", new Opcode("SLTU", [])]]), new GenericComparer(compare));
                   var R_SMap = __exports.R_SMap = create$1(ofArray([["SRA", new Opcode("SRA", [])], ["SRL", new Opcode("SRL", [])], ["SLL", new Opcode("SLL", [])]]), new GenericComparer(compare));
                   var R_VMap = __exports.R_VMap = create$1(ofArray([["SRAV", new Opcode("SRAV", [])], ["SRLV", new Opcode("SRLV", [])], ["SLLV", new Opcode("SLLV", [])]]), new GenericComparer(compare));
-                  var R_JMap = __exports.R_JMap = create$1(ofArray([["JR", new Opcode("JR", [])], ["JALR", new Opcode("JALR", [])], ["MTHI", new Opcode("MTHI", [])], ["MTLO", new Opcode("MTLO", [])]]), new GenericComparer(compare));
+                  var R_JMap = __exports.R_JMap = create$1(ofArray([["JR", new Opcode("JR", [])], ["JALR", new Opcode("JALR", [])], ["MFHI", new Opcode("MFHI", [])], ["MFLO", new Opcode("MFLO", [])], ["MTHI", new Opcode("MTHI", [])], ["MTLO", new Opcode("MTLO", [])]]), new GenericComparer(compare));
+                  var R_MMap = __exports.R_MMap = create$1(ofArray([["DIV", new Opcode("DIV", [])], ["DIVU", new Opcode("DIVU", [])], ["MULT", new Opcode("MULT", [])], ["MULTU", new Opcode("MULTU", [])]]), new GenericComparer(compare));
                   var ICodeMap = __exports.ICodeMap = create$1(ofArray([[new Opcode("ADDI", []), 8], [new Opcode("ADDIU", []), 9], [new Opcode("ANDI", []), 12], [new Opcode("ORI", []), 13], [new Opcode("XORI", []), 14], [new Opcode("SLTI", []), 10], [new Opcode("SLTIU", []), 11]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
                   var I_OCodeMap = __exports.I_OCodeMap = create$1(ofArray([[new Opcode("BEQ", []), 4], [new Opcode("BNE", []), 5]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
-                  var I_SOCodeMap = __exports.I_SOCodeMap = create$1(ofArray([[new Opcode("BGEZ", []), 1], [new Opcode("BGEZAL", []), 17], [new Opcode("BLTZAL", []), 16]]), new GenericComparer(function (x, y) {
+                  var I_SOCodeMap = __exports.I_SOCodeMap = create$1(ofArray([[new Opcode("BGEZ", []), 1], [new Opcode("BGEZAL", []), 17], [new Opcode("BLTZ", []), 0], [new Opcode("BLTZAL", []), 16]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
-                  var I_SCodeMap = __exports.I_SCodeMap = create$1(ofArray([[new Opcode("BGTZ", []), 7], [new Opcode("BLEZ", []), 6], [new Opcode("BLTZ", []), 1], [new Opcode("LUI", []), 15]]), new GenericComparer(function (x, y) {
+                  var I_SCodeMap = __exports.I_SCodeMap = create$1(ofArray([[new Opcode("BGTZ", []), 7], [new Opcode("BLEZ", []), 6], [new Opcode("LUI", []), 15]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
-                  var I_BOCodeMap = __exports.I_BOCodeMap = create$1(ofArray([[new Opcode("LB", []), 32], [new Opcode("LBU", []), 36], [new Opcode("LH", []), 33], [new Opcode("LW", []), 35], [new Opcode("LWL", []), 34], [new Opcode("LWR", []), 38], [new Opcode("SB", []), 40], [new Opcode("SH", []), 41], [new Opcode("SW", []), 43]]), new GenericComparer(function (x, y) {
+                  var I_BOCodeMap = __exports.I_BOCodeMap = create$1(ofArray([[new Opcode("LB", []), 32], [new Opcode("LBU", []), 36], [new Opcode("LH", []), 33], [new Opcode("LHU", []), 37], [new Opcode("LW", []), 35], [new Opcode("LWL", []), 34], [new Opcode("LWR", []), 38], [new Opcode("SB", []), 40], [new Opcode("SH", []), 41], [new Opcode("SW", []), 43]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
                   var JCodeMap = __exports.JCodeMap = create$1(ofArray([[new Opcode("J", []), 2], [new Opcode("JAL", []), 3]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
-                  var RCodeMap = __exports.RCodeMap = create$1(ofArray([[new Opcode("ADD", []), 32], [new Opcode("ADDU", []), 33], [new Opcode("AND", []), 36], [new Opcode("OR", []), 37], [new Opcode("SUB", []), 34], [new Opcode("SUBU", []), 35], [new Opcode("XOR", []), 38], [new Opcode("SLT", []), 42], [new Opcode("SLTU", []), 43], [new Opcode("DIV", []), 26], [new Opcode("DIVU", []), 27], [new Opcode("MULT", []), 24], [new Opcode("MULTU", []), 25], [new Opcode("MFHI", []), 16], [new Opcode("MFLO", []), 18]]), new GenericComparer(function (x, y) {
+                  var RCodeMap = __exports.RCodeMap = create$1(ofArray([[new Opcode("ADD", []), 32], [new Opcode("ADDU", []), 33], [new Opcode("AND", []), 36], [new Opcode("OR", []), 37], [new Opcode("NOR", []), 39], [new Opcode("SUB", []), 34], [new Opcode("SUBU", []), 35], [new Opcode("XOR", []), 38], [new Opcode("SLT", []), 42], [new Opcode("SLTU", []), 43], [new Opcode("SRAV", []), 7], [new Opcode("SRLV", []), 6], [new Opcode("SLLV", []), 4]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
                   var R_SCodeMap = __exports.R_SCodeMap = create$1(ofArray([[new Opcode("SRA", []), 3], [new Opcode("SRL", []), 2], [new Opcode("SLL", []), 0]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
-                  var R_VCodeMap = __exports.R_VCodeMap = create$1(ofArray([[new Opcode("SRAV", []), 7], [new Opcode("SRLV", []), 6], [new Opcode("SLLV", []), 4]]), new GenericComparer(function (x, y) {
+                  var R_JCodeMap = __exports.R_JCodeMap = create$1(ofArray([[new Opcode("JR", []), 8], [new Opcode("JALR", []), 9], [new Opcode("MFHI", []), 16], [new Opcode("MFLO", []), 18], [new Opcode("MTHI", []), 17], [new Opcode("MTLO", []), 19]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
-                  var R_JCodeMap = __exports.R_JCodeMap = create$1(ofArray([[new Opcode("JR", []), 8], [new Opcode("JALR", []), 9], [new Opcode("MTHI", []), 17], [new Opcode("MTLO", []), 19]]), new GenericComparer(function (x, y) {
+                  var R_MCodeMap = __exports.R_MCodeMap = create$1(ofArray([[new Opcode("DIV", []), 26], [new Opcode("DIVU", []), 27], [new Opcode("MULT", []), 24], [new Opcode("MULTU", []), 25]]), new GenericComparer(function (x, y) {
                                     return x.CompareTo(y);
                   }));
 
@@ -1530,9 +1545,10 @@ var Instructions = function (__exports) {
                                                                                                             I_O: [],
                                                                                                             I_S: [],
                                                                                                             I_SO: [],
-                                                                                                            J: [],
+                                                                                                            JJ: [],
                                                                                                             R: [],
                                                                                                             R_J: [],
+                                                                                                            R_M: [],
                                                                                                             R_S: [],
                                                                                                             R_V: []
                                                                                           }
@@ -2331,7 +2347,7 @@ var MachineState = function () {
                     Lo: Types.Word,
                     MemMap: makeGeneric(FableMap, {
                         Key: Types.Memory,
-                        Value: Types.Word
+                        Value: Types.Byte
                     }),
                     State: RunState,
                     pc: Types.Word,
@@ -2364,18 +2380,39 @@ function getHi(mach) {
 function getLo(mach) {
     return mach.Lo;
 }
+function getMem(mem, mach) {
+    var matchValue = Types.T.getValue_6(mem) < 4096;
 
-
-function getPC(mach) {
-    return mach.pc;
+    if (matchValue) {
+        return find$$1(mem, mach.MemMap);
+    } else {
+        return fsFormat("RunTimeErr : unexisting memory address with function getMem")(function (x) {
+            throw new Error(x);
+        });
+    }
 }
+function getState(mach) {
+    return mach.State;
+}
+
 function getNextPC(mach) {
     return mach.pcNext;
 }
-function getNextNextPC(mach) {
-    return mach.pcNextNext;
-}
 
+function advancePC(mach) {
+    var m = new MachineState(mach.RegMap, mach.Hi, mach.Lo, mach.MemMap, mach.State, mach.pcNext, mach.pcNext, mach.pcNextNext);
+    var m2 = void 0;
+
+    if (mach.pcNextNext == null) {
+        var pcNext = new Types.Word("Word", [Types.T.getValue_2(mach.pcNext) + 4]);
+        m2 = new MachineState(m.RegMap, m.Hi, m.Lo, m.MemMap, m.State, m.pc, pcNext, m.pcNextNext);
+    } else {
+        m2 = new MachineState(m.RegMap, m.Hi, m.Lo, m.MemMap, m.State, m.pc, mach.pcNextNext, m.pcNextNext);
+    }
+
+    var pcNextNext = null;
+    return new MachineState(m2.RegMap, m2.Hi, m2.Lo, m2.MemMap, m2.State, m2.pc, m2.pcNext, pcNextNext);
+}
 function setNextNextPC(next, mach) {
     var pcNextNext = next;
     return new MachineState(mach.RegMap, mach.Hi, mach.Lo, mach.MemMap, mach.State, mach.pc, mach.pcNext, pcNextNext);
@@ -2397,7 +2434,19 @@ function setLo(data, mach) {
     var newMach = new MachineState(mach.RegMap, mach.Hi, data, mach.MemMap, mach.State, mach.pc, mach.pcNext, mach.pcNextNext);
     return newMach;
 }
+function setMem(mem, data, mach) {
+    var matchValue = Types.T.getValue_6(mem) < 4096;
 
+    if (matchValue) {
+        var newMemMap = add(mem, data, mach.MemMap);
+        var newMach = new MachineState(mach.RegMap, mach.Hi, mach.Lo, newMemMap, mach.State, mach.pc, mach.pcNext, mach.pcNextNext);
+        return newMach;
+    } else {
+        return fsFormat("RunTimeErr : unexisting memory address with function setMem")(function (x) {
+            throw new Error(x);
+        });
+    }
+}
 function setState(state, mach) {
     var newMach = new MachineState(mach.RegMap, mach.Hi, mach.Lo, mach.MemMap, state, mach.pc, mach.pcNext, mach.pcNextNext);
     return newMach;
@@ -2411,12 +2460,20 @@ var initialise = function () {
     }, reg)), new GenericComparer(function (x, y) {
         return x.CompareTo(y);
     }));
-    var memMap = create$1(null, new GenericComparer(compare));
-    return new MachineState(regMap, new Types.Word("Word", [0]), new Types.Word("Word", [0]), memMap, new RunState("RunOK", []), new Types.Word("Word", [0]), new Types.Word("Word", [4]), null);
+    var memMap = void 0;
+    var memSpace = Uint32Array.from(range(0, 4095));
+    memMap = create$1(Array.from(map$1(function (i_1) {
+        return [new Types.Memory("Memory", [i_1]), new Types.Byte("Byte", [0 & 0xFF])];
+    }, memSpace)), new GenericComparer(function (x, y) {
+        return x.CompareTo(y);
+    }));
+    var megaRecord = new MachineState(regMap, new Types.Word("Word", [0]), new Types.Word("Word", [0]), memMap, new RunState("RunOK", []), new Types.Word("Word", [0]), new Types.Word("Word", [4]), null);
+    return megaRecord;
 }();
 
 function tokenise(s) {
-    return split$1(s, " ", ",", "(", ")", "\t", "\n", "\r", "\f").filter(function () {
+    var nocomment = split$1(s, "#")[0];
+    return split$1(nocomment, " ", ",", "(", ")", "\t", "\n", "\r", "\f").filter(function () {
         var x = "";
         return function (y) {
             return x !== y;
@@ -2450,429 +2507,222 @@ function targetWithinRange(target) {
 }
 function parseI_Type(iTokens) {
     var opcode = find$$1(iTokens[0], Instructions.IMap);
-
-    if (!isNum(iTokens[1])) {
-        fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[1]);
-    }
-
-    if (!regWithinRange(Number.parseInt(iTokens[1]))) {
-        fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[1]));
-    }
-
-    var r_t = new Types.Register("Register", [Number.parseInt(iTokens[1])]);
-
-    if (!isNum(iTokens[2])) {
-        fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[2]);
-    }
-
-    if (!regWithinRange(Number.parseInt(iTokens[2]))) {
-        fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[2]));
-    }
-
-    var r_s = new Types.Register("Register", [Number.parseInt(iTokens[2])]);
-
-    if (!isNum(iTokens[3])) {
-        fsFormat("imm: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[3]);
-    }
-
-    if (!immWithinRange(Number.parseInt(iTokens[3]))) {
-        fsFormat("imm: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[3]));
-    }
-
-    var immed = new Types.Half("Half", [Number.parseInt(iTokens[3])]);
-    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I", []), r_s, r_t, new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), immed, new Types.Targetval("Targetval", [0]));
+    var patternInput = iTokens.length !== 4 ? fsFormat("Invalid Operation: %A. Takes 3 parameters.")(function (x) {
+        throw new Error(x);
+    })(iTokens[0]) : !isNum(iTokens[1]) ? fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !regWithinRange(Number.parseInt(iTokens[1])) ? fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !isNum(iTokens[2]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : !regWithinRange(Number.parseInt(iTokens[2])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : !isNum(iTokens[3]) ? fsFormat("imm: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[3]) : !immWithinRange(Number.parseInt(iTokens[3])) ? fsFormat("imm: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
+        throw new Error(x);
+    })(iTokens[3]) : [new Types.Register("Register", [Number.parseInt(iTokens[1])]), new Types.Register("Register", [Number.parseInt(iTokens[2])]), new Types.Half("Half", [Number.parseInt(iTokens[3])])];
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I", []), patternInput[1], patternInput[0], new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), patternInput[2], new Types.Targetval("Targetval", [0]));
 }
 function parseI_O_Type(iTokens) {
     var opcode = find$$1(iTokens[0], Instructions.I_OMap);
-
-    if (!isNum(iTokens[1])) {
-        fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[1]);
-    }
-
-    if (!regWithinRange(Number.parseInt(iTokens[1]))) {
-        fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[1]));
-    }
-
-    var r_s = new Types.Register("Register", [Number.parseInt(iTokens[1])]);
-
-    if (!isNum(iTokens[2])) {
-        fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[2]);
-    }
-
-    if (!regWithinRange(Number.parseInt(iTokens[2]))) {
-        fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[2]));
-    }
-
-    var r_t = new Types.Register("Register", [Number.parseInt(iTokens[2])]);
-
-    if (!isNum(iTokens[3])) {
-        fsFormat("offset: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[3]);
-    }
-
-    if (!immWithinRange(Number.parseInt(iTokens[3]))) {
-        fsFormat("offset: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[3]));
-    }
-
-    var immed = new Types.Half("Half", [Number.parseInt(iTokens[3])]);
-    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I_O", []), r_s, r_t, new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), immed, new Types.Targetval("Targetval", [0]));
+    var patternInput = iTokens.length !== 4 ? fsFormat("Invalid Operation: %A. Takes 3 parameters.")(function (x) {
+        throw new Error(x);
+    })(iTokens[0]) : !isNum(iTokens[1]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !regWithinRange(Number.parseInt(iTokens[1])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !isNum(iTokens[2]) ? fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : !regWithinRange(Number.parseInt(iTokens[2])) ? fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : !isNum(iTokens[3]) ? fsFormat("imm: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[3]) : !immWithinRange(Number.parseInt(iTokens[3])) ? fsFormat("imm: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
+        throw new Error(x);
+    })(iTokens[3]) : [new Types.Register("Register", [Number.parseInt(iTokens[1])]), new Types.Register("Register", [Number.parseInt(iTokens[2])]), new Types.Half("Half", [Number.parseInt(iTokens[3])])];
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I_O", []), patternInput[0], patternInput[1], new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), patternInput[2], new Types.Targetval("Targetval", [0]));
 }
 function parseI_S_Type(iTokens) {
     var opcode = find$$1(iTokens[0], Instructions.I_SMap);
-
-    if (!isNum(iTokens[1])) {
-        fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[1]);
-    }
-
-    if (!regWithinRange(Number.parseInt(iTokens[1]))) {
-        fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[1]));
-    }
-
-    var r_s = new Types.Register("Register", [Number.parseInt(iTokens[1])]);
-
-    if (!isNum(iTokens[2])) {
-        fsFormat("offset: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[2]);
-    }
-
-    if (!immWithinRange(Number.parseInt(iTokens[2]))) {
-        fsFormat("offset: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[2]));
-    }
-
-    var immed = new Types.Half("Half", [Number.parseInt(iTokens[2])]);
-    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I_S", []), r_s, new Types.Register("Register", [0]), new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), immed, new Types.Targetval("Targetval", [0]));
+    var patternInput = iTokens.length !== 3 ? fsFormat("Invalid Operation: %A. Takes 2 parameters.")(function (x) {
+        throw new Error(x);
+    })(iTokens[0]) : !isNum(iTokens[1]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !regWithinRange(Number.parseInt(iTokens[1])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !isNum(iTokens[2]) ? fsFormat("imm: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : !immWithinRange(Number.parseInt(iTokens[2])) ? fsFormat("imm: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : [new Types.Register("Register", [Number.parseInt(iTokens[1])]), new Types.Half("Half", [Number.parseInt(iTokens[2])])];
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I_S", []), patternInput[0], new Types.Register("Register", [0]), new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), patternInput[1], new Types.Targetval("Targetval", [0]));
 }
 function parseI_SO_Type(iTokens) {
     var opcode = find$$1(iTokens[0], Instructions.I_SOMap);
-
-    if (!isNum(iTokens[1])) {
-        fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[1]);
-    }
-
-    if (!regWithinRange(Number.parseInt(iTokens[1]))) {
-        fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[1]));
-    }
-
-    var r_s = new Types.Register("Register", [Number.parseInt(iTokens[1])]);
-
-    if (!isNum(iTokens[2])) {
-        fsFormat("offset: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[2]);
-    }
-
-    if (!immWithinRange(Number.parseInt(iTokens[2]))) {
-        fsFormat("offset: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[2]));
-    }
-
-    var immed = new Types.Half("Half", [Number.parseInt(iTokens[2])]);
-    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I_SO", []), r_s, new Types.Register("Register", [0]), new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), immed, new Types.Targetval("Targetval", [0]));
+    var patternInput = iTokens.length !== 3 ? fsFormat("Invalid Operation: %A. Takes 2 parameters.")(function (x) {
+        throw new Error(x);
+    })(iTokens[0]) : !isNum(iTokens[1]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !regWithinRange(Number.parseInt(iTokens[1])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !isNum(iTokens[2]) ? fsFormat("imm: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : !immWithinRange(Number.parseInt(iTokens[2])) ? fsFormat("imm: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : iTokens[0] === "LUI" ? [new Types.Register("Register", [Number.parseInt(iTokens[1])]), new Types.Register("Register", [0]), new Types.Half("Half", [Number.parseInt(iTokens[2])])] : [new Types.Register("Register", [0]), new Types.Register("Register", [Number.parseInt(iTokens[1])]), new Types.Half("Half", [Number.parseInt(iTokens[2])])];
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I_SO", []), patternInput[1], patternInput[0], new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), patternInput[2], new Types.Targetval("Targetval", [0]));
 }
 function parseI_BO_Type(iTokens) {
     var opcode = find$$1(iTokens[0], Instructions.I_BOMap);
-
-    if (!isNum(iTokens[1])) {
-        fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[1]);
-    }
-
-    if (!regWithinRange(Number.parseInt(iTokens[1]))) {
-        fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[1]));
-    }
-
-    var r_t = new Types.Register("Register", [Number.parseInt(iTokens[1])]);
-
-    if (!isNum(iTokens[2])) {
-        fsFormat("offset: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[2]);
-    }
-
-    if (!immWithinRange(Number.parseInt(iTokens[2]))) {
-        fsFormat("offset: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[2]));
-    }
-
-    var immed = new Types.Half("Half", [Number.parseInt(iTokens[2])]);
-
-    if (!isNum(iTokens[3])) {
-        fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(iTokens[3]);
-    }
-
-    if (!regWithinRange(Number.parseInt(iTokens[3]))) {
-        fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(iTokens[3]));
-    }
-
-    var r_s = new Types.Register("Register", [Number.parseInt(iTokens[3])]);
-    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I_BO", []), r_s, r_t, new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), immed, new Types.Targetval("Targetval", [0]));
+    var patternInput = iTokens.length !== 4 ? fsFormat("Invalid Operation: %A. Takes 3 parameters.")(function (x) {
+        throw new Error(x);
+    })(iTokens[0]) : !isNum(iTokens[1]) ? fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !regWithinRange(Number.parseInt(iTokens[1])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(iTokens[1]) : !isNum(iTokens[2]) ? fsFormat("imm: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : !immWithinRange(Number.parseInt(iTokens[2])) ? fsFormat("imm: %A is not within range. Accepted values between -32768 and 32767.")(function (x) {
+        throw new Error(x);
+    })(iTokens[2]) : !isNum(iTokens[3]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(iTokens[3]) : !regWithinRange(Number.parseInt(iTokens[3])) ? fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(iTokens[3]) : [new Types.Register("Register", [Number.parseInt(iTokens[1])]), new Types.Half("Half", [Number.parseInt(iTokens[2])]), new Types.Register("Register", [Number.parseInt(iTokens[3])])];
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("I_BO", []), patternInput[2], patternInput[0], new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), patternInput[1], new Types.Targetval("Targetval", [0]));
 }
 function parseJ_Type(jTokens) {
     var opcode = find$$1(jTokens[0], Instructions.JMap);
-
-    if (!isNum(jTokens[1])) {
-        fsFormat("target: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(jTokens[1]);
-    }
-
-    if (!targetWithinRange(Number.parseInt(jTokens[1]))) {
-        fsFormat("target: %A is not within range. Accepted values between 0 and 67108863.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(jTokens[1]));
-    }
-
-    var target = new Types.Targetval("Targetval", [Number.parseInt(jTokens[1])]);
-    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("J", []), new Types.Register("Register", [0]), new Types.Register("Register", [0]), new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), target);
+    var target = jTokens.length !== 2 ? fsFormat("Invalid Operation: %A. Takes 1 parameter.")(function (x) {
+        throw new Error(x);
+    })(jTokens[0]) : !isNum(jTokens[1]) ? fsFormat("target: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(jTokens[1]) : !targetWithinRange(Number.parseInt(jTokens[1])) ? fsFormat("target: %A is not within range. Accepted values between 0 and 67108863.")(function (x) {
+        throw new Error(x);
+    })(jTokens[1]) : new Types.Targetval("Targetval", [Number.parseInt(jTokens[1])]);
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("JJ", []), new Types.Register("Register", [0]), new Types.Register("Register", [0]), new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), target);
 }
 function parseR_Type(rTokens) {
     var opcode = find$$1(rTokens[0], Instructions.RMap);
-
-    if (!isNum(rTokens[1])) {
-        fsFormat("rd: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(rTokens[1]);
-    }
-
-    if (!regWithinRange(Number.parseInt(rTokens[1]))) {
-        fsFormat("rd: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(rTokens[1]));
-    }
-
-    var r_d = new Types.Register("Register", [Number.parseInt(rTokens[1])]);
-
-    if (!isNum(rTokens[2])) {
-        fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(rTokens[2]);
-    }
-
-    if (!regWithinRange(Number.parseInt(rTokens[2]))) {
-        fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(rTokens[2]));
-    }
-
-    var r_s = new Types.Register("Register", [Number.parseInt(rTokens[2])]);
-
-    if (!isNum(rTokens[3])) {
-        fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(rTokens[3]);
-    }
-
-    if (!regWithinRange(Number.parseInt(rTokens[3]))) {
-        fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(rTokens[3]));
-    }
-
-    var r_t = new Types.Register("Register", [Number.parseInt(rTokens[3])]);
-    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R", []), r_s, r_t, r_d, new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
+    var patternInput = rTokens.length !== 4 ? fsFormat("Invalid Operation: %A. Takes 3 parameters.")(function (x) {
+        throw new Error(x);
+    })(rTokens[0]) : !isNum(rTokens[1]) ? fsFormat("rd: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[1]) : !regWithinRange(Number.parseInt(rTokens[1])) ? fsFormat("rd: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[1]) : !isNum(rTokens[2]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[2]) : !regWithinRange(Number.parseInt(rTokens[2])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[2]) : !isNum(rTokens[3]) ? fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[3]) : !regWithinRange(Number.parseInt(rTokens[3])) ? fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[3]) : [new Types.Register("Register", [Number.parseInt(rTokens[1])]), new Types.Register("Register", [Number.parseInt(rTokens[2])]), new Types.Register("Register", [Number.parseInt(rTokens[3])])];
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R", []), patternInput[1], patternInput[2], patternInput[0], new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
 }
 function parseR_V_Type(rTokens) {
     var opcode = find$$1(rTokens[0], Instructions.R_VMap);
-
-    if (!isNum(rTokens[1])) {
-        fsFormat("rd: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(rTokens[1]);
-    }
-
-    if (!regWithinRange(Number.parseInt(rTokens[1]))) {
-        fsFormat("rd: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(rTokens[1]));
-    }
-
-    var r_d = new Types.Register("Register", [Number.parseInt(rTokens[1])]);
-
-    if (!isNum(rTokens[2])) {
-        fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(rTokens[2]);
-    }
-
-    if (!regWithinRange(Number.parseInt(rTokens[2]))) {
-        fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(rTokens[2]));
-    }
-
-    var r_t = new Types.Register("Register", [Number.parseInt(rTokens[2])]);
-
-    if (!isNum(rTokens[3])) {
-        fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(rTokens[3]);
-    }
-
-    if (!regWithinRange(Number.parseInt(rTokens[3]))) {
-        fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(rTokens[3]));
-    }
-
-    var r_s = new Types.Register("Register", [Number.parseInt(rTokens[3])]);
-    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_V", []), r_s, r_t, r_d, new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
+    var patternInput = rTokens.length !== 4 ? fsFormat("Invalid Operation: %A. Takes 3 parameters.")(function (x) {
+        throw new Error(x);
+    })(rTokens[0]) : !isNum(rTokens[1]) ? fsFormat("rd: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[1]) : !regWithinRange(Number.parseInt(rTokens[1])) ? fsFormat("rd: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[1]) : !isNum(rTokens[2]) ? fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[2]) : !regWithinRange(Number.parseInt(rTokens[2])) ? fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[2]) : !isNum(rTokens[3]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[3]) : !regWithinRange(Number.parseInt(rTokens[3])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[3]) : [new Types.Register("Register", [Number.parseInt(rTokens[1])]), new Types.Register("Register", [Number.parseInt(rTokens[2])]), new Types.Register("Register", [Number.parseInt(rTokens[3])])];
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_V", []), patternInput[2], patternInput[1], patternInput[0], new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
 }
 function parseR_S_Type(rTokens) {
     var opcode = find$$1(rTokens[0], Instructions.R_SMap);
-
-    if (!isNum(rTokens[1])) {
-        fsFormat("rd: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(rTokens[1]);
-    }
-
-    if (!regWithinRange(Number.parseInt(rTokens[1]))) {
-        fsFormat("rd: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(rTokens[1]));
-    }
-
-    var r_d = new Types.Register("Register", [Number.parseInt(rTokens[1])]);
-
-    if (!isNum(rTokens[2])) {
-        fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(rTokens[2]);
-    }
-
-    if (!regWithinRange(Number.parseInt(rTokens[2]))) {
-        fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(rTokens[2]));
-    }
-
-    var r_t = new Types.Register("Register", [Number.parseInt(rTokens[2])]);
-
-    if (!isNum(rTokens[3])) {
-        fsFormat("shift: %A is invalid. Please use integers only.")(function (x) {
-            throw new Error(x);
-        })(rTokens[3]);
-    }
-
-    if (!regWithinRange(Number.parseInt(rTokens[3]))) {
-        fsFormat("shift: %A is not within range. Accepted shift values between 0 and 31.")(function (x) {
-            throw new Error(x);
-        })(Number.parseInt(rTokens[3]));
-    }
-
-    var shift = new Types.Shiftval("Shiftval", [Number.parseInt(rTokens[3])]);
-    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_S", []), new Types.Register("Register", [0]), r_t, r_d, shift, new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
+    var patternInput = rTokens.length !== 4 ? fsFormat("Invalid Operation: %A. Takes 3 parameters.")(function (x) {
+        throw new Error(x);
+    })(rTokens[0]) : !isNum(rTokens[1]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[1]) : !regWithinRange(Number.parseInt(rTokens[1])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[1]) : !isNum(rTokens[2]) ? fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[2]) : !regWithinRange(Number.parseInt(rTokens[2])) ? fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[2]) : !isNum(rTokens[3]) ? fsFormat("shift: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[3]) : !regWithinRange(Number.parseInt(rTokens[3])) ? fsFormat("shift: %A is not within range. Accepted shift values between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[3]) : [new Types.Register("Register", [Number.parseInt(rTokens[1])]), new Types.Register("Register", [Number.parseInt(rTokens[2])]), new Types.Shiftval("Shiftval", [Number.parseInt(rTokens[3])])];
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_S", []), new Types.Register("Register", [0]), patternInput[1], patternInput[0], patternInput[2], new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
 }
 function parseR_J_Type(rTokens) {
     var opcode = find$$1(rTokens[0], Instructions.R_JMap);
 
     if (opcode.Equals(new Instructions.Opcode("JALR", []))) {
         if (rTokens.length === 3) {
-            if (!isNum(rTokens[1])) {
-                fsFormat("rd: %A is invalid. Please use integers only.")(function (x) {
-                    throw new Error(x);
-                })(rTokens[1]);
-            }
-
-            if (!regWithinRange(Number.parseInt(rTokens[1]))) {
-                fsFormat("rd: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-                    throw new Error(x);
-                })(Number.parseInt(rTokens[1]));
-            }
-
-            var r_d = new Types.Register("Register", [Number.parseInt(rTokens[1])]);
-
-            if (!isNum(rTokens[2])) {
-                fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-                    throw new Error(x);
-                })(rTokens[2]);
-            }
-
-            if (!regWithinRange(Number.parseInt(rTokens[2]))) {
-                fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-                    throw new Error(x);
-                })(Number.parseInt(rTokens[2]));
-            }
-
-            var r_s = new Types.Register("Register", [Number.parseInt(rTokens[2])]);
-            return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_J", []), r_s, new Types.Register("Register", [0]), r_d, new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
+            var patternInput = !isNum(rTokens[1]) ? fsFormat("rd: %A is invalid. Please use integers only.")(function (x) {
+                throw new Error(x);
+            })(rTokens[1]) : !regWithinRange(Number.parseInt(rTokens[1])) ? fsFormat("rd: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+                throw new Error(x);
+            })(rTokens[1]) : !isNum(rTokens[2]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+                throw new Error(x);
+            })(rTokens[2]) : !regWithinRange(Number.parseInt(rTokens[2])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+                throw new Error(x);
+            })(rTokens[2]) : [new Types.Register("Register", [Number.parseInt(rTokens[1])]), new Types.Register("Register", [Number.parseInt(rTokens[2])])];
+            return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_J", []), patternInput[1], new Types.Register("Register", [0]), patternInput[0], new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
+        } else if (rTokens.length === 2) {
+            var r_s = !isNum(rTokens[1]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+                throw new Error(x);
+            })(rTokens[1]) : !regWithinRange(Number.parseInt(rTokens[1])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+                throw new Error(x);
+            })(rTokens[1]) : new Types.Register("Register", [Number.parseInt(rTokens[1])]);
+            return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_J", []), r_s, new Types.Register("Register", [0]), new Types.Register("Register", [31]), new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
         } else {
-            var r_d_1 = new Types.Register("Register", [31]);
-
-            if (!isNum(rTokens[1])) {
-                fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-                    throw new Error(x);
-                })(rTokens[1]);
-            }
-
-            if (!regWithinRange(Number.parseInt(rTokens[1]))) {
-                fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-                    throw new Error(x);
-                })(Number.parseInt(rTokens[1]));
-            }
-
-            var r_s_1 = new Types.Register("Register", [Number.parseInt(rTokens[1])]);
-            return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_J", []), r_s_1, new Types.Register("Register", [0]), r_d_1, new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
+            return fsFormat("Invalid Operation: %A. Takes 1 or 2 parameters.")(function (x) {
+                throw new Error(x);
+            })(rTokens[0]);
+        }
+    } else if (rTokens.length === 2) {
+        if (opcode.Equals(new Instructions.Opcode("MFLO", [])) ? true : opcode.Equals(new Instructions.Opcode("MFHI", []))) {
+            var r_d = !isNum(rTokens[1]) ? fsFormat("rd: %A is invalid. Please use integers only.")(function (x) {
+                throw new Error(x);
+            })(rTokens[1]) : !regWithinRange(Number.parseInt(rTokens[1])) ? fsFormat("rd: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+                throw new Error(x);
+            })(rTokens[1]) : new Types.Register("Register", [Number.parseInt(rTokens[1])]);
+            return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_J", []), new Types.Register("Register", [0]), new Types.Register("Register", [0]), r_d, new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
+        } else {
+            var r_s_1 = !isNum(rTokens[1]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+                throw new Error(x);
+            })(rTokens[1]) : !regWithinRange(Number.parseInt(rTokens[1])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+                throw new Error(x);
+            })(rTokens[1]) : new Types.Register("Register", [Number.parseInt(rTokens[1])]);
+            return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_J", []), r_s_1, new Types.Register("Register", [0]), new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
         }
     } else {
-        if (!isNum(rTokens[1])) {
-            fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
-                throw new Error(x);
-            })(rTokens[1]);
-        }
-
-        if (!regWithinRange(Number.parseInt(rTokens[1]))) {
-            fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
-                throw new Error(x);
-            })(Number.parseInt(rTokens[1]));
-        }
-
-        var r_s_2 = new Types.Register("Register", [Number.parseInt(rTokens[1])]);
-        return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_J", []), r_s_2, new Types.Register("Register", [0]), new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
+        return fsFormat("Invalid Operation: %A. Takes 1 parameter.")(function (x) {
+            throw new Error(x);
+        })(rTokens[0]);
     }
+}
+function parseR_M_Type(rTokens) {
+    var opcode = find$$1(rTokens[0], Instructions.R_MMap);
+    var patternInput = rTokens.length !== 3 ? fsFormat("Invalid Operation: %A. Takes 2 parameters.")(function (x) {
+        throw new Error(x);
+    })(rTokens[0]) : !isNum(rTokens[1]) ? fsFormat("rs: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[1]) : !regWithinRange(Number.parseInt(rTokens[1])) ? fsFormat("rs: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[1]) : !isNum(rTokens[2]) ? fsFormat("rt: %A is invalid. Please use integers only.")(function (x) {
+        throw new Error(x);
+    })(rTokens[2]) : !regWithinRange(Number.parseInt(rTokens[2])) ? fsFormat("rt: %A is not within range. Accepted Registers between 0 and 31.")(function (x) {
+        throw new Error(x);
+    })(rTokens[2]) : [new Types.Register("Register", [Number.parseInt(rTokens[1])]), new Types.Register("Register", [Number.parseInt(rTokens[2])])];
+    return new Instructions.Instruction(opcode, new Instructions.Instr_Type("R_M", []), patternInput[0], patternInput[1], new Types.Register("Register", [0]), new Types.Shiftval("Shiftval", [0]), new Types.Half("Half", [0]), new Types.Targetval("Targetval", [0]));
 }
 function parse$1(tokens) {
     if (Instructions.IMap.has(tokens[0])) {
@@ -2895,6 +2745,8 @@ function parse$1(tokens) {
         return parseR_S_Type(tokens);
     } else if (Instructions.R_JMap.has(tokens[0])) {
         return parseR_J_Type(tokens);
+    } else if (Instructions.R_MMap.has(tokens[0])) {
+        return parseR_M_Type(tokens);
     } else {
         return fsFormat("Syntax Error! \nInvalid Operation: %A does not exist in MIPS I! \nIs your operation name all UPPERCASE?")(function (x) {
             throw new Error(x);
@@ -2904,7 +2756,7 @@ function parse$1(tokens) {
 
 function opADD(mach, instr, _arg2, _arg1) {
     var output32 = fromNumber(~~_arg2.Fields[0] + ~~_arg1.Fields[0], false);
-    var output64 = fromNumber(_arg2.Fields[0], false).add(fromNumber(_arg1.Fields[0], false));
+    var output64 = fromNumber(~~_arg2.Fields[0], false).add(fromNumber(_arg1.Fields[0], false));
     var matchValue = output32.Equals(output64);
 
     if (matchValue) {
@@ -2912,13 +2764,13 @@ function opADD(mach, instr, _arg2, _arg1) {
         return [output, mach];
     } else {
         var outputSameRd = getReg(instr.rd, mach);
-        var newmach = setState(new RunState("RunTimeErr", ["Overflow on ADD"]), mach);
-        return [outputSameRd, newmach];
+        var newMach = setState(new RunState("RunTimeErr", ["Overflow on ADD"]), mach);
+        return [outputSameRd, newMach];
     }
 }
 function opSUB(mach, instr, _arg2, _arg1) {
     var output32 = fromNumber(~~_arg2.Fields[0] - ~~_arg1.Fields[0], false);
-    var output64 = fromNumber(_arg2.Fields[0], false).sub(fromNumber(_arg1.Fields[0], false));
+    var output64 = fromNumber(~~_arg2.Fields[0], false).sub(fromNumber(_arg1.Fields[0], false));
     var matchValue = output32.Equals(output64);
 
     if (matchValue) {
@@ -2926,24 +2778,28 @@ function opSUB(mach, instr, _arg2, _arg1) {
         return [output, mach];
     } else {
         var outputSameRd = getReg(instr.rd, mach);
-        var newmach = setState(new RunState("RunTimeErr", ["Overflow on SUB"]), mach);
-        return [outputSameRd, newmach];
+        var newMach = setState(new RunState("RunTimeErr", ["Overflow on SUB"]), mach);
+        return [outputSameRd, newMach];
     }
 }
 function opDIV(mach, instr, _arg2, _arg1) {
     if (_arg1.Fields[0] === 0) {
         return mach;
     } else {
-        var quotient = new Types.Word("Word", [~~(~~_arg2.Fields[0] / ~~_arg1.Fields[0]) >>> 0]);
-        var remainder = new Types.Word("Word", [~~_arg2.Fields[0] % ~~_arg1.Fields[0] >>> 0]);
+        try {
+            var quotient = new Types.Word("Word", [~~(~~_arg2.Fields[0] / ~~_arg1.Fields[0]) >>> 0]);
+            var remainder = new Types.Word("Word", [~~_arg2.Fields[0] % ~~_arg1.Fields[0] >>> 0]);
 
-        var newmach = function (mach_1) {
-            return setLo(quotient, mach_1);
-        }(function (mach_2) {
-            return setHi(remainder, mach_2);
-        }(mach));
+            var newMach = function (mach_1) {
+                return setLo(quotient, mach_1);
+            }(function (mach_2) {
+                return setHi(remainder, mach_2);
+            }(mach));
 
-        return newmach;
+            return newMach;
+        } catch (e) {
+            return mach;
+        }
     }
 }
 function opDIVU(mach, instr, _arg2, _arg1) {
@@ -2953,13 +2809,13 @@ function opDIVU(mach, instr, _arg2, _arg1) {
         var quotient = new Types.Word("Word", [~~(_arg2.Fields[0] / _arg1.Fields[0])]);
         var remainder = new Types.Word("Word", [_arg2.Fields[0] % _arg1.Fields[0]]);
 
-        var newmach = function (mach_1) {
+        var newMach = function (mach_1) {
             return setLo(quotient, mach_1);
         }(function (mach_2) {
             return setHi(remainder, mach_2);
         }(mach));
 
-        return newmach;
+        return newMach;
     }
 }
 function opMULT(mach, instr, _arg2, _arg1) {
@@ -2967,36 +2823,51 @@ function opMULT(mach, instr, _arg2, _arg1) {
     var upper = new Types.Word("Word", [result.shr(32).toNumber() >>> 0]);
     var lower = new Types.Word("Word", [result.toNumber() >>> 0]);
 
-    var newmach = function (mach_1) {
+    var newMach = function (mach_1) {
         return setLo(lower, mach_1);
     }(function (mach_2) {
         return setHi(upper, mach_2);
     }(mach));
 
-    return newmach;
+    return newMach;
 }
 function opMULTU(mach, instr, _arg2, _arg1) {
     var result = fromNumber(_arg2.Fields[0], true).mul(fromNumber(_arg1.Fields[0], true));
     var upper = new Types.Word("Word", [result.shr(32).toNumber() >>> 0]);
     var lower = new Types.Word("Word", [result.toNumber() >>> 0]);
 
-    var newmach = function (mach_1) {
+    var newMach = function (mach_1) {
         return setLo(lower, mach_1);
     }(function (mach_2) {
         return setHi(upper, mach_2);
     }(mach));
 
-    return newmach;
+    return newMach;
 }
 function opJR(mach, instr, _arg2, _arg1) {
-    return fsFormat("Not implemented yet")(function (x) {
-        throw new Error(x);
-    });
+    var returnMach = void 0;
+    var matchValue = (_arg2.Fields[0] & 3) === 0;
+
+    if (matchValue) {
+        returnMach = setNextNextPC(new Types.Word("Word", [_arg2.Fields[0]]), mach);
+    } else {
+        returnMach = setState(new RunState("RunTimeErr", ["Address Error on JR"]), mach);
+    }
+
+    return returnMach;
 }
 function opJALR(mach, instr, _arg2, _arg1) {
-    return fsFormat("Not implemented yet")(function (x) {
-        throw new Error(x);
-    });
+    var returnAddress = new Types.Word("Word", [Types.T.getValue_2(getNextPC(mach)) + 8]);
+    var returnMach = void 0;
+    var matchValue = (_arg2.Fields[0] & 3) === 0;
+
+    if (matchValue) {
+        returnMach = setNextNextPC(new Types.Word("Word", [_arg2.Fields[0]]), mach);
+    } else {
+        returnMach = setState(new RunState("RunTimeErr", ["Address Error on JALR"]), mach);
+    }
+
+    return [returnAddress, returnMach];
 }
 function opMTHI(mach, instr, rS, _arg1) {
     return setHi(rS, mach);
@@ -3006,18 +2877,257 @@ function opMTLO(mach, instr, rS, _arg1) {
 }
 
 function opADDI(mach, instr, _arg2, _arg1) {
-    var output32 = fromNumber(~~_arg2.Fields[0] + ~~_arg1.Fields[0], false);
-    var output64 = fromNumber(_arg2.Fields[0], false).add(fromNumber(_arg1.Fields[0], false));
+    var immediateSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000;
+    var output32 = fromNumber(~~_arg2.Fields[0] + immediateSigned, false);
+    var output64 = fromNumber(~~_arg2.Fields[0], false).add(fromNumber(immediateSigned, false));
     var matchValue = output32.Equals(output64);
 
     if (matchValue) {
-        var output = new Types.Word("Word", [_arg2.Fields[0] + _arg1.Fields[0]]);
+        var output = new Types.Word("Word", [_arg2.Fields[0] + (immediateSigned >>> 0)]);
         return [output, mach];
     } else {
         var outputSameRd = getReg(instr.rd, mach);
-        var newmach = setState(new RunState("RunTimeErr", ["Overflow on ADD"]), mach);
-        return [outputSameRd, newmach];
+        var newMach = setState(new RunState("RunTimeErr", ["Overflow on ADDI"]), mach);
+        return [outputSameRd, newMach];
     }
+}
+function opLB(mach, instr, rT, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var address = new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned]);
+    var outputByte = Types.T.getValue_4(getMem(address, mach));
+    var outputWord = new Types.Word("Word", [(outputByte + 0x80 & 0xFF) - 0x80 >>> 0]);
+    var newMach = setReg(instr.rt, outputWord, mach);
+    return newMach;
+}
+function opLBU(mach, instr, rT, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var address = new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned]);
+    var outputByte = Types.T.getValue_4(getMem(address, mach));
+    var outputWord = new Types.Word("Word", [outputByte]);
+    var newMach = setReg(instr.rt, outputWord, mach);
+    return newMach;
+}
+function opLH(mach, instr, rT, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var addressL = new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned]);
+    var returnMach = void 0;
+    var matchValue = (Types.T.getValue_6(addressL) & 1) === 0;
+
+    if (matchValue) {
+        var outputHalfL = Types.T.getValue_4(getMem(addressL, mach));
+        var addressM = new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned + 1]);
+        var outputHalfM = Types.T.getValue_4(getMem(addressM, mach));
+        var outputHalf = (outputHalfM << 8) + outputHalfL;
+        var outputWord = new Types.Word("Word", [(outputHalf + 0x8000 & 0xFFFF) - 0x8000 >>> 0]);
+        var newMachT = setReg(instr.rt, outputWord, mach);
+        returnMach = newMachT;
+    } else {
+        var newMachF = setState(new RunState("RunTimeErr", ["Address Error on LH"]), mach);
+        returnMach = newMachF;
+    }
+
+    return returnMach;
+}
+function opLHU(mach, instr, rT, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var addressL = new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned]);
+    var returnMach = void 0;
+    var matchValue = (Types.T.getValue_6(addressL) & 1) === 0;
+
+    if (matchValue) {
+        var outputHalfL = Types.T.getValue_4(getMem(addressL, mach));
+        var addressM = new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned + 1]);
+        var outputHalfM = Types.T.getValue_4(getMem(addressM, mach));
+        var outputHalf = (outputHalfM << 8) + outputHalfL;
+        var outputWord = new Types.Word("Word", [outputHalf]);
+        var newMachT = setReg(instr.rt, outputWord, mach);
+        returnMach = newMachT;
+    } else {
+        var newMachF = setState(new RunState("RunTimeErr", ["Address Error on LHU"]), mach);
+        returnMach = newMachF;
+    }
+
+    return returnMach;
+}
+function opLW(mach, instr, rT, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var returnMach = void 0;
+    var matchValue = (_arg2.Fields[0] + offsetSigned & 3) === 0;
+
+    if (matchValue) {
+        var output = void 0;
+
+        var createAddress = function createAddress(x) {
+            return new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned + x]);
+        };
+
+        var loadContent = function loadContent(x_1) {
+            return Types.T.getValue_4(getMem(x_1, mach));
+        };
+
+        var createWord = function createWord(x_2) {
+            return fold$1(function (acc, y) {
+                return (acc << 8) + y;
+            }, 0, x_2);
+        };
+
+        output = createWord(map$2(function ($var5) {
+            return loadContent(createAddress($var5));
+        }, ofArray([0, 1, 2, 3])));
+        var outputWord = new Types.Word("Word", [output]);
+        var newMachT = setReg(instr.rt, outputWord, mach);
+        returnMach = newMachT;
+    } else {
+        var newMachF = setState(new RunState("RunTimeErr", ["Address Error on LW"]), mach);
+        returnMach = newMachF;
+    }
+
+    return returnMach;
+}
+function opLWL(mach, instr, _arg3, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var byteNumber = _arg2.Fields[0] + offsetSigned & 3;
+    var fetchedBytes = void 0;
+
+    var createAddress = function createAddress(x) {
+        return new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned + x]);
+    };
+
+    var loadContent = function loadContent(x_1) {
+        return Types.T.getValue_4(getMem(x_1, mach));
+    };
+
+    var createBytes = function createBytes(x_2) {
+        return fold$1(function (acc, y) {
+            return (acc << 8) + y;
+        }, 0, x_2) << 8 * ~~byteNumber;
+    };
+
+    fetchedBytes = createBytes(map$2(function ($var6) {
+        return loadContent(createAddress($var6));
+    }, toList(range(byteNumber, 3))));
+    var modifRt = void 0;
+    var shiftToEraseVal = 8 * ~~(4 - byteNumber);
+    var matchValue = byteNumber === 0;
+
+    if (matchValue) {
+        modifRt = new Types.Word("Word", [fetchedBytes]);
+    } else {
+        modifRt = new Types.Word("Word", [(_arg3.Fields[0] << shiftToEraseVal >>> shiftToEraseVal) + fetchedBytes]);
+    }
+
+    var returnMach = setReg(instr.rt, modifRt, mach);
+    return returnMach;
+}
+function opLWR(mach, instr, _arg3, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var byteNumber = _arg2.Fields[0] + offsetSigned & 3;
+    var fetchedBytes = void 0;
+
+    var createAddress = function createAddress(x) {
+        return new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned + x]);
+    };
+
+    var loadContent = function loadContent(x_1) {
+        return Types.T.getValue_4(getMem(x_1, mach));
+    };
+
+    var createBytes = function createBytes(x_2) {
+        return fold$1(function (acc, y) {
+            return (acc << 8) + y;
+        }, 0, x_2);
+    };
+
+    fetchedBytes = createBytes(map$2(function ($var7) {
+        return loadContent(createAddress($var7));
+    }, toList(range(0, byteNumber))));
+    var modifRt = void 0;
+    var shiftToEraseVal = 8 * ~~(byteNumber + 1);
+    modifRt = new Types.Word("Word", [(_arg3.Fields[0] >>> shiftToEraseVal << shiftToEraseVal) + fetchedBytes]);
+    var returnMach = setReg(instr.rt, modifRt, mach);
+    return returnMach;
+}
+function opSB(mach, instr, _arg3, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var address = new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned]);
+    var rTByte = new Types.Byte("Byte", [_arg3.Fields[0] & 0xFF]);
+    var returnMach = setMem(address, rTByte, mach);
+    return returnMach;
+}
+function opSH(mach, instr, _arg3, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var addressL = new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned]);
+    var returnMach = void 0;
+    var matchValue = (Types.T.getValue_6(addressL) & 1) === 0;
+
+    if (matchValue) {
+        var rTByteL = new Types.Byte("Byte", [_arg3.Fields[0] & 0xFF]);
+        var rTByteM = new Types.Byte("Byte", [_arg3.Fields[0] >>> 8 & 0xFF]);
+        var addressM = new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned + 1]);
+
+        var newMachT = function (mach_1) {
+            return setMem(addressM, rTByteM, mach_1);
+        }(function (mach_2) {
+            return setMem(addressL, rTByteL, mach_2);
+        }(mach));
+
+        returnMach = newMachT;
+    } else {
+        var newMachF = setState(new RunState("RunTimeErr", ["Address Error on SH"]), mach);
+        returnMach = newMachF;
+    }
+
+    return returnMach;
+}
+function opSW(mach, instr, _arg3, _arg2, _arg1) {
+    var offsetSigned = (_arg1.Fields[0] + 0x8000 & 0xFFFF) - 0x8000 >>> 0;
+    var returnMach = void 0;
+    var matchValue = (_arg2.Fields[0] + offsetSigned & 3) === 0;
+
+    if (matchValue) {
+        var newMachT = void 0;
+
+        var createAddress = function createAddress(x) {
+            return new Types.Memory("Memory", [_arg2.Fields[0] + offsetSigned + x]);
+        };
+
+        var createByte = function createByte(x_1) {
+            return new Types.Byte("Byte", [_arg3.Fields[0] >>> 8 * ~~x_1 & 0xFF]);
+        };
+
+        var storeWord = function storeWord(x_2) {
+            return fold$1(function (acc, tupledArg) {
+                return setMem(tupledArg[0], tupledArg[1], acc);
+            }, mach, x_2);
+        };
+
+        newMachT = storeWord(map$2(function (x_3) {
+            return [createAddress(x_3), createByte(x_3)];
+        }, ofArray([0, 1, 2, 3])));
+        returnMach = newMachT;
+    } else {
+        var newMachF = setState(new RunState("RunTimeErr", ["Address Error on SW"]), mach);
+        returnMach = newMachF;
+    }
+
+    return returnMach;
+}
+
+function opJ(mach, _arg1) {
+    var address = (Types.T.getValue_2(getNextPC(mach)) & 4026531840) + (_arg1.Fields[0] << 2 & 268435455);
+    return setNextNextPC(new Types.Word("Word", [address]), mach);
+}
+function opJAL(mach, _arg1) {
+    var address = new Types.Word("Word", [(Types.T.getValue_2(getNextPC(mach)) & 4026531840) + (_arg1.Fields[0] << 2 & 268435455)]);
+    var returnAddress = new Types.Word("Word", [Types.T.getValue_2(address) + 4]);
+    return function () {
+        var reg = new Types.Register("Register", [31]);
+        return function (mach_1) {
+            return setReg(reg, returnAddress, mach_1);
+        };
+    }()(function (mach_2) {
+        return setNextNextPC(address, mach_2);
+    }(mach));
 }
 
 function processSimpleR(instr, mach) {
@@ -3031,6 +3141,8 @@ function processSimpleR(instr, mach) {
         tmp = rs & rt;
     } else if (instr.opcode.Case === "OR") {
         tmp = rs | rt;
+    } else if (instr.opcode.Case === "NOR") {
+        tmp = ~(rs | rt);
     } else if (instr.opcode.Case === "SRAV") {
         tmp = ~~rt >> ~~rs >>> 0;
     } else if (instr.opcode.Case === "SRLV") {
@@ -3175,47 +3287,41 @@ function processFullR(instr, mach) {
     }));
     var rs = getReg(instr.rs, mach);
     var rt = getReg(instr.rt, mach);
-    var returnmach = void 0;
+    var returnMach = void 0;
     var matchValue = localMap1.has(instr.opcode);
 
     if (matchValue) {
         var fn1 = find$$1(instr.opcode, localMap1);
         var patternInput = fn1(mach)(instr)(rs)(rt);
-        var newmach1 = setReg(instr.rd, patternInput[0], patternInput[1]);
-        returnmach = newmach1;
+        var newMach1 = setReg(instr.rd, patternInput[0], patternInput[1]);
+        returnMach = newMach1;
     } else {
         var fn2 = find$$1(instr.opcode, localMap2);
-        var newmach2 = fn2(mach)(instr)(rs)(rt);
-        returnmach = newmach2;
+        var newMach2 = fn2(mach)(instr)(rs)(rt);
+        returnMach = newMach2;
     }
 
-    return returnmach;
-}
-function processMultDiv(instr, mach) {
-    throw new Error("Not Implemented");
-}
-function processHILO(instr, mach) {
-    throw new Error("Not Implemented");
+    return returnMach;
 }
 function processSimpleI(instr, mach) {
     var rs = Types.T.getValue_2(getReg(instr.rs, mach));
     var rt = Types.T.getValue_2(getReg(instr.rt, mach));
-    var immediateForAdd = Types.T.getValue_3(instr.immed);
-    var immediateForRest = immediateForAdd & 65535;
+    var immediateUnsigned = Types.T.getValue_3(instr.immed);
+    var immediateSigned = (Types.T.getValue_3(instr.immed) + 0x8000 & 0xFFFF) - 0x8000;
     var tmp = void 0;
 
     if (instr.opcode.Case === "ADDIU") {
-        tmp = rs + immediateForAdd;
+        tmp = rs + (immediateSigned >>> 0);
     } else if (instr.opcode.Case === "ANDI") {
-        tmp = rs & immediateForRest;
+        tmp = rs & immediateUnsigned;
     } else if (instr.opcode.Case === "ORI") {
-        tmp = rs | immediateForRest;
+        tmp = rs | immediateUnsigned;
     } else if (instr.opcode.Case === "XORI") {
-        tmp = rs ^ immediateForRest;
+        tmp = rs ^ immediateUnsigned;
     } else if (instr.opcode.Case === "LUI") {
-        tmp = immediateForAdd << 16;
+        tmp = immediateUnsigned << 16;
     } else if (instr.opcode.Case === "SLTI") {
-        var matchValue = ~~rs < ~~immediateForAdd;
+        var matchValue = ~~rs < immediateSigned;
 
         if (matchValue) {
             tmp = 1;
@@ -3223,7 +3329,7 @@ function processSimpleI(instr, mach) {
             tmp = 0;
         }
     } else if (instr.opcode.Case === "SLTIU") {
-        var matchValue_1 = rs < immediateForAdd;
+        var matchValue_1 = rs < immediateSigned >>> 0;
 
         if (matchValue_1) {
             tmp = 1;
@@ -3235,73 +3341,73 @@ function processSimpleI(instr, mach) {
     }
 
     var output = new Types.Word("Word", [tmp]);
-    var newmach = setReg(instr.rt, output, mach);
-    return newmach;
+    var newMach = setReg(instr.rt, output, mach);
+    return newMach;
 }
 function processBranchI(instr, mach) {
     var immed = Types.T.getValue_3(instr.immed);
     var rs = Types.T.getValue_2(getReg(instr.rs, mach));
     var rt = Types.T.getValue_2(getReg(instr.rt, mach));
     var patternInput = void 0;
-    var $var5 = instr.opcode.Case === "BGEZ" ? rs >= 0 ? [0] : [1] : [1];
+    var $var8 = instr.opcode.Case === "BGEZ" ? rs >= 0 ? [0] : [1] : [1];
 
-    switch ($var5[0]) {
+    switch ($var8[0]) {
         case 0:
             patternInput = [true, false];
             break;
 
         case 1:
-            var $var6 = instr.opcode.Case === "BGEZAL" ? rs >= 0 ? [0] : [1] : [1];
+            var $var9 = instr.opcode.Case === "BGEZAL" ? rs >= 0 ? [0] : [1] : [1];
 
-            switch ($var6[0]) {
+            switch ($var9[0]) {
                 case 0:
                     patternInput = [true, true];
                     break;
 
                 case 1:
-                    var $var7 = instr.opcode.Case === "BEQ" ? rs === rt ? [0] : [1] : [1];
+                    var $var10 = instr.opcode.Case === "BEQ" ? rs === rt ? [0] : [1] : [1];
 
-                    switch ($var7[0]) {
+                    switch ($var10[0]) {
                         case 0:
                             patternInput = [true, false];
                             break;
 
                         case 1:
-                            var $var8 = instr.opcode.Case === "BNE" ? rs !== rt ? [0] : [1] : [1];
+                            var $var11 = instr.opcode.Case === "BNE" ? rs !== rt ? [0] : [1] : [1];
 
-                            switch ($var8[0]) {
+                            switch ($var11[0]) {
                                 case 0:
                                     patternInput = [true, false];
                                     break;
 
                                 case 1:
-                                    var $var9 = instr.opcode.Case === "BLEZ" ? rs <= 0 ? [0] : [1] : [1];
+                                    var $var12 = instr.opcode.Case === "BLEZ" ? rs <= 0 ? [0] : [1] : [1];
 
-                                    switch ($var9[0]) {
+                                    switch ($var12[0]) {
                                         case 0:
                                             patternInput = [true, false];
                                             break;
 
                                         case 1:
-                                            var $var10 = instr.opcode.Case === "BLTZ" ? rs < 0 ? [0] : [1] : [1];
+                                            var $var13 = instr.opcode.Case === "BLTZ" ? rs < 0 ? [0] : [1] : [1];
 
-                                            switch ($var10[0]) {
+                                            switch ($var13[0]) {
                                                 case 0:
                                                     patternInput = [true, false];
                                                     break;
 
                                                 case 1:
-                                                    var $var11 = instr.opcode.Case === "BLTZAL" ? rs < 0 ? [0] : [1] : [1];
+                                                    var $var14 = instr.opcode.Case === "BLTZAL" ? rs < 0 ? [0] : [1] : [1];
 
-                                                    switch ($var11[0]) {
+                                                    switch ($var14[0]) {
                                                         case 0:
                                                             patternInput = [true, true];
                                                             break;
 
                                                         case 1:
-                                                            var $var12 = instr.opcode.Case === "BGTZ" ? rs >= 0 ? [0] : [1] : [1];
+                                                            var $var15 = instr.opcode.Case === "BGTZ" ? rs >= 0 ? [0] : [1] : [1];
 
-                                                            switch ($var12[0]) {
+                                                            switch ($var15[0]) {
                                                                 case 0:
                                                                     patternInput = [true, false];
                                                                     break;
@@ -3332,10 +3438,10 @@ function processBranchI(instr, mach) {
             break;
     }
 
-    var newmach = setNextNextPC(new Types.Word("Word", [Types.T.getValue_2(getNextPC(mach)) + 4 * immed]), mach);
-    return newmach;
+    var newMach = setNextNextPC(new Types.Word("Word", [Types.T.getValue_2(getNextPC(mach)) + 4 * immed]), mach);
+    return newMach;
 }
-function processfullI(instr, mach) {
+function processFullI(instr, mach) {
     var localMap = create$1(ofArray([[new Instructions.Opcode("ADDI", []), function (mach_1) {
         return function (instr_1) {
             return function (arg20_) {
@@ -3350,10 +3456,136 @@ function processfullI(instr, mach) {
     var rs = getReg(instr.rs, mach);
     var fn = find$$1(instr.opcode, localMap);
     var patternInput = fn(mach)(instr)(rs)(instr.immed);
-    var newmach = setReg(instr.rt, patternInput[0], patternInput[1]);
-    return newmach;
+    var returnMach = setReg(instr.rt, patternInput[0], patternInput[1]);
+    return returnMach;
 }
-var opTypeMap = create$1(ofArray([[ofArray([new Instructions.Opcode("ADDU", []), new Instructions.Opcode("AND", []), new Instructions.Opcode("OR", []), new Instructions.Opcode("SRAV", []), new Instructions.Opcode("SRLV", []), new Instructions.Opcode("SLLV", []), new Instructions.Opcode("SUBU", []), new Instructions.Opcode("XOR", []), new Instructions.Opcode("SLT", []), new Instructions.Opcode("SLTU", []), new Instructions.Opcode("MFHI", []), new Instructions.Opcode("MFLO", [])]), function (instr) {
+function processMemI(instr, mach) {
+    var localMap = create$1(ofArray([[new Instructions.Opcode("LB", []), function (mach_1) {
+        return function (instr_1) {
+            return function (rT) {
+                return function (arg30_) {
+                    return function (arg40_) {
+                        return opLB(mach_1, instr_1, rT, arg30_, arg40_);
+                    };
+                };
+            };
+        };
+    }], [new Instructions.Opcode("LBU", []), function (mach_2) {
+        return function (instr_2) {
+            return function (rT_1) {
+                return function (arg30__1) {
+                    return function (arg40__1) {
+                        return opLBU(mach_2, instr_2, rT_1, arg30__1, arg40__1);
+                    };
+                };
+            };
+        };
+    }], [new Instructions.Opcode("LH", []), function (mach_3) {
+        return function (instr_3) {
+            return function (rT_2) {
+                return function (arg30__2) {
+                    return function (arg40__2) {
+                        return opLH(mach_3, instr_3, rT_2, arg30__2, arg40__2);
+                    };
+                };
+            };
+        };
+    }], [new Instructions.Opcode("LHU", []), function (mach_4) {
+        return function (instr_4) {
+            return function (rT_3) {
+                return function (arg30__3) {
+                    return function (arg40__3) {
+                        return opLHU(mach_4, instr_4, rT_3, arg30__3, arg40__3);
+                    };
+                };
+            };
+        };
+    }], [new Instructions.Opcode("LW", []), function (mach_5) {
+        return function (instr_5) {
+            return function (rT_4) {
+                return function (arg30__4) {
+                    return function (arg40__4) {
+                        return opLW(mach_5, instr_5, rT_4, arg30__4, arg40__4);
+                    };
+                };
+            };
+        };
+    }], [new Instructions.Opcode("LWL", []), function (mach_6) {
+        return function (instr_6) {
+            return function (arg20_) {
+                return function (arg30__5) {
+                    return function (arg40__5) {
+                        return opLWL(mach_6, instr_6, arg20_, arg30__5, arg40__5);
+                    };
+                };
+            };
+        };
+    }], [new Instructions.Opcode("LWR", []), function (mach_7) {
+        return function (instr_7) {
+            return function (arg20__1) {
+                return function (arg30__6) {
+                    return function (arg40__6) {
+                        return opLWR(mach_7, instr_7, arg20__1, arg30__6, arg40__6);
+                    };
+                };
+            };
+        };
+    }], [new Instructions.Opcode("SB", []), function (mach_8) {
+        return function (instr_8) {
+            return function (arg20__2) {
+                return function (arg30__7) {
+                    return function (arg40__7) {
+                        return opSB(mach_8, instr_8, arg20__2, arg30__7, arg40__7);
+                    };
+                };
+            };
+        };
+    }], [new Instructions.Opcode("SH", []), function (mach_9) {
+        return function (instr_9) {
+            return function (arg20__3) {
+                return function (arg30__8) {
+                    return function (arg40__8) {
+                        return opSH(mach_9, instr_9, arg20__3, arg30__8, arg40__8);
+                    };
+                };
+            };
+        };
+    }], [new Instructions.Opcode("SW", []), function (mach_10) {
+        return function (instr_10) {
+            return function (arg20__4) {
+                return function (arg30__9) {
+                    return function (arg40__9) {
+                        return opSW(mach_10, instr_10, arg20__4, arg30__9, arg40__9);
+                    };
+                };
+            };
+        };
+    }]]), new GenericComparer(function (x, y) {
+        return x.CompareTo(y);
+    }));
+    var rt = getReg(instr.rt, mach);
+    var myBase = getReg(instr.rs, mach);
+    var fn = find$$1(instr.opcode, localMap);
+    var newMach = fn(mach)(instr)(rt)(myBase)(instr.immed);
+    return newMach;
+}
+function processFullJ(instr, mach) {
+    var localMap = create$1(ofArray([[new Instructions.Opcode("J", []), function (mach_1) {
+        return function (arg10_) {
+            return opJ(mach_1, arg10_);
+        };
+    }], [new Instructions.Opcode("JAL", []), function (mach_2) {
+        return function (arg10__1) {
+            return opJAL(mach_2, arg10__1);
+        };
+    }]]), new GenericComparer(function (x, y) {
+        return x.CompareTo(y);
+    }));
+    var fn = find$$1(instr.opcode, localMap);
+    var newMach = fn(mach)(instr.target);
+    return newMach;
+}
+var opTypeMap = create$1(ofArray([[ofArray([new Instructions.Opcode("ADDU", []), new Instructions.Opcode("AND", []), new Instructions.Opcode("NOR", []), new Instructions.Opcode("OR", []), new Instructions.Opcode("SRAV", []), new Instructions.Opcode("SRLV", []), new Instructions.Opcode("SLLV", []), new Instructions.Opcode("SUBU", []), new Instructions.Opcode("XOR", []), new Instructions.Opcode("SLT", []), new Instructions.Opcode("SLTU", []), new Instructions.Opcode("MFHI", []), new Instructions.Opcode("MFLO", [])]), function (instr) {
     return function (mach) {
         return processSimpleR(instr, mach);
     };
@@ -3375,15 +3607,15 @@ var opTypeMap = create$1(ofArray([[ofArray([new Instructions.Opcode("ADDU", []),
     };
 }], [ofArray([new Instructions.Opcode("ADDI", [])]), function (instr_5) {
     return function (mach_5) {
-        return processfullI(instr_5, mach_5);
+        return processFullI(instr_5, mach_5);
     };
-}], [ofArray([new Instructions.Opcode("DIV", []), new Instructions.Opcode("DIVU", []), new Instructions.Opcode("MULT", []), new Instructions.Opcode("MULTU", [])]), function (instr_6) {
+}], [ofArray([new Instructions.Opcode("LB", []), new Instructions.Opcode("LBU", []), new Instructions.Opcode("LH", []), new Instructions.Opcode("LHU", []), new Instructions.Opcode("LW", []), new Instructions.Opcode("LWL", []), new Instructions.Opcode("LWR", []), new Instructions.Opcode("SB", []), new Instructions.Opcode("SH", []), new Instructions.Opcode("SW", [])]), function (instr_6) {
     return function (mach_6) {
-        return processMultDiv(instr_6, mach_6);
+        return processMemI(instr_6, mach_6);
     };
-}], [ofArray([new Instructions.Opcode("MFHI", []), new Instructions.Opcode("MFLO", []), new Instructions.Opcode("MTHI", []), new Instructions.Opcode("MTLO", [])]), function (instr_7) {
+}], [ofArray([new Instructions.Opcode("J", []), new Instructions.Opcode("JAL", [])]), function (instr_7) {
     return function (mach_7) {
-        return processHILO(instr_7, mach_7);
+        return processFullJ(instr_7, mach_7);
     };
 }]]), new GenericComparer(function (x, y) {
     return x.CompareTo(y);
@@ -3395,26 +3627,9 @@ function executeInstruction(instr, mach) {
         }, x);
     }, opTypeMap);
     var fn = find$$1(key, opTypeMap);
-    return fn(instr)(mach);
+    return advancePC(fn(instr)(mach));
 }
 
-var Util = function (__exports) {
-    var load = __exports.load = function (key) {
-        return defaultArg(localStorage.getItem(key), null, function ($var13) {
-            return function (value) {
-                return value;
-            }(function (arg00) {
-                return JSON.parse(arg00);
-            }($var13));
-        });
-    };
-
-    var save = __exports.save = function (key, data) {
-        localStorage.setItem(key, JSON.stringify(data));
-    };
-
-    return __exports;
-}({});
 var editId = getById("editor");
 var executeButton = getById("execute");
 var resetButton = getById("reset");
@@ -3423,7 +3638,7 @@ var stepForwardsButton = getById("stepForwards");
 var errorLog = getById("errorLog");
 var cmEditor = CodeMirror.fromTextArea(editId, initOptions);
 cmEditor.setSize("100%", "45%");
-var initialValue = "ADDI 5,6,11\t   # this is a comment!\nAND 1,2,3      # this is a comment!\nAND 1,2,4      # this is a comment!\nAND 1,2,5      # this is a comment!\nAND 1,2,6      # this is a comment!\nAND 1,2,7      # this is a comment!";
+var initialValue = "ADDI 5,6,50\t    # move 50 to register 5\nADDI 12,6,77    # move 77 to register 12\nSB 5,1,1   \t\t# store data from register 5 into memory\nLB 15,1,1\t\t# load data in memory into register 15\n";
 cmEditor.setValue(initialValue);
 function getIDAndUpdateRegisterValue(registerNumber, result) {
     var HTMLRegister = getById("mipsRegister" + String(registerNumber));
@@ -3432,80 +3647,41 @@ function getIDAndUpdateRegisterValue(registerNumber, result) {
 function updateRegisterValuesInHTML(mach) {
     for (var i = 0; i <= 31; i++) {
         var matchValue = mach.RegMap.get(new Types.Register("Register", [i]));
-        getIDAndUpdateRegisterValue(i, String(matchValue.Fields[0]));
+        getIDAndUpdateRegisterValue(i, String(~~matchValue.Fields[0]));
     }
 }
 function updateProgramCounterInHTML(mach) {
     var PC = getById("mipsRegister-1");
     var nextPC = getById("mipsRegister-2");
-    var nextNextPC = getById("mipsRegister-3");
-    PC.innerHTML = String(mach.pc.Fields[0]);
-    nextPC.innerHTML = String(mach.pcNext.Fields[0]);
+    var hi = getById("mipsRegister-3");
+    var lo = getById("mipsRegister-4");
+    PC.innerHTML = String(~~mach.pc.Fields[0]);
+    nextPC.innerHTML = String(~~mach.pcNext.Fields[0]);
+    hi.innerHTML = String(~~mach.Hi.Fields[0]);
+    lo.innerHTML = String(~~mach.Lo.Fields[0]);
+}
+function updateMemoryInHTML(mach) {
+    var memoryTable = getById("addMoreMemory");
+    var str = "";
 
-    if (mach.pcNextNext == null) {
-        nextNextPC.innerHTML = "null";
-    } else {
-        nextNextPC.innerHTML = toString(mach.pcNextNext);
+    for (var i = 0; i <= 1023; i++) {
+        var matchValue = mach.MemMap.get(new Types.Memory("Memory", [i * 3 + i >>> 0]));
+        str = "<tr><td>" + String(i + i * 3) + "</td><td>" + String(matchValue.Fields[0]) + "</td>";
+        var matchValue_1 = mach.MemMap.get(new Types.Memory("Memory", [i + i * 3 + 1 >>> 0]));
+        str = str + ("<td>" + String(matchValue_1.Fields[0]) + "</td>");
+        var matchValue_2 = mach.MemMap.get(new Types.Memory("Memory", [i + i * 3 + 2 >>> 0]));
+        str = str + ("<td>" + String(matchValue_2.Fields[0]) + "</td>");
+        var matchValue_3 = mach.MemMap.get(new Types.Memory("Memory", [i + i * 3 + 3 >>> 0]));
+        str = str + ("<td>" + String(matchValue_3.Fields[0]) + "</td>");
+        memoryTable.insertAdjacentHTML("beforeend", str);
     }
 }
 exports.currentMachineState = initialise;
-updateRegisterValuesInHTML(exports.currentMachineState);
-updateProgramCounterInHTML(exports.currentMachineState);
-function printLogAndUpdateRegisters(currentLineNumber) {
-    var machStateToString = function machStateToString(mach) {
-        if (mach.State.Case === "RunTimeErr") {
-            return "RunTimeErr : " + mach.State.Fields[0];
-        } else if (mach.State.Case === "SyntaxErr") {
-            return "SyntaxErr : " + mach.State.Fields[0];
-        } else {
-            return "RunOK";
-        }
-    };
-
-    var hiToString = function hiToString(mach_1) {
-        var matchValue = getHi(mach_1);
-        return "Hi : " + String(matchValue.Fields[0]);
-    };
-
-    var loToString = function loToString(mach_2) {
-        var matchValue_1 = getLo(mach_2);
-        return "Lo : " + String(matchValue_1.Fields[0]);
-    };
-
-    var pcToString = function pcToString(mach_3) {
-        var matchValue_2 = getPC(mach_3);
-        return "PC : " + String(matchValue_2.Fields[0]);
-    };
-
-    var nextPCToString = function nextPCToString(mach_4) {
-        var matchValue_3 = getNextPC(mach_4);
-        return "nextPC : " + String(matchValue_3.Fields[0]);
-    };
-
-    var nextNextPCToString = function nextNextPCToString(mach_5) {
-        var matchValue_4 = getNextNextPC(mach_5);
-
-        if (matchValue_4 == null) {
-            return "Nothing is here";
-        } else {
-            return "NextNextPC : " + toString(matchValue_4);
-        }
-    };
-
-    var registerStateToString = function registerStateToString(mach_6) {
-        for (var i = 0; i <= 31; i++) {
-            var matchValue_5 = mach_6.RegMap.get(new Types.Register("Register", [i]));
-            errorLog.insertAdjacentHTML("beforeend", "R" + String(i) + "=" + String(matchValue_5.Fields[0]) + "   ");
-        }
-    };
-
-    errorLog.insertAdjacentHTML("beforeend", "<p>Line " + String(currentLineNumber + 1) + ": " + cmEditor.getLine(currentLineNumber) + " " + machStateToString(exports.currentMachineState) + " " + "</p>");
-    errorLog.insertAdjacentHTML("beforeend", "<p>" + hiToString(exports.currentMachineState) + " " + loToString(exports.currentMachineState) + " " + pcToString(exports.currentMachineState) + " " + nextPCToString(exports.currentMachineState) + " " + nextNextPCToString(exports.currentMachineState) + "</p>");
-    registerStateToString(exports.currentMachineState);
-}
 function setCurrentMachineState(mach) {
     exports.currentMachineState = mach;
 }
+updateRegisterValuesInHTML(exports.currentMachineState);
+updateProgramCounterInHTML(exports.currentMachineState);
 function fail$$1(msg, line) {
     var msgs = split$1(msg, "\n");
     var found = msgs[0].indexOf(": ");
@@ -3513,11 +3689,21 @@ function fail$$1(msg, line) {
     fsFormat("Line %i: %s")(function (x) {
         console.log(x);
     })(line)(message);
-    errorLog.insertAdjacentHTML("beforeend", "<p>Line " + String(line + 1) + ": " + message + "</p>");
+    errorLog.innerHTML = "<p>Line " + String(line + 1) + ": " + message + "</p>";
     throw new Error("Parser Error!");
 }
 function eachLineProcessing(mach, currentLine) {
     var codeMirrorText = cmEditor.getLine(currentLine);
+    var checkForRunTimeError = void 0;
+    var matchValue = getState(mach);
+
+    if (matchValue.Case === "RunTimeErr") {
+        errorLog.innerHTML = "<p>Line " + String(currentLine) + " : " + "RunTimeError : " + matchValue.Fields[0] + "</p>";
+    } else if (matchValue.Case === "SyntaxErr") {
+        errorLog.innerHTML = "<p>Line " + String(currentLine) + " : " + "SyntaxError : " + matchValue.Fields[0] + "</p>";
+    } else {
+        checkForRunTimeError = null;
+    }
 
     if (codeMirrorText === "") {} else {
         var input = tokenise(codeMirrorText);
@@ -3532,7 +3718,6 @@ function eachLineProcessing(mach, currentLine) {
         setCurrentMachineState(function (mach_1) {
             return executeInstruction(instruction, mach_1);
         }(mach));
-        printLogAndUpdateRegisters(currentLine);
     }
 }
 function processAllCodeMirrorInput(startLine, lastLine) {
@@ -3548,9 +3733,15 @@ function executeButtonHandler() {
     processAllCodeMirrorInput(0, cmEditor.lastLine());
     updateRegisterValuesInHTML(exports.currentMachineState);
     updateProgramCounterInHTML(exports.currentMachineState);
+    updateMemoryInHTML(exports.currentMachineState);
+    errorLog.innerHTML = "";
 }
 function resetButtonHandler() {
-    for (var i = -5; i <= 31; i++) {
+    var currentLine = cmEditor.getCursor();
+    currentLine.line = 0;
+    cmEditor.setCursor(currentLine);
+
+    for (var i = -4; i <= 31; i++) {
         getIDAndUpdateRegisterValue(i, "0");
     }
 
@@ -3559,7 +3750,6 @@ function resetButtonHandler() {
 function stepBackwardsButtonHandler() {
     setCurrentMachineState(initialise);
     var currentLine = cmEditor.getCursor();
-    currentLine.line = cmEditor.getCursor().line;
     var matchValue = currentLine.line;
 
     if (matchValue === 0) {
@@ -3570,30 +3760,19 @@ function stepBackwardsButtonHandler() {
 
     updateRegisterValuesInHTML(exports.currentMachineState);
     updateProgramCounterInHTML(exports.currentMachineState);
+    updateMemoryInHTML(exports.currentMachineState);
     currentLine.line = currentLine.line - 1;
     cmEditor.setCursor(currentLine);
-    fsFormat("what is the current line number Step back - %A")(function (x) {
-        console.log(x);
-    })(currentLine.line);
 }
 function stepForwardsButtonHandler() {
     setCurrentMachineState(initialise);
     var currentLine = cmEditor.getCursor();
-    cmEditor.setCursor(currentLine);
     processAllCodeMirrorInput(0, currentLine.line);
     updateRegisterValuesInHTML(exports.currentMachineState);
     updateProgramCounterInHTML(exports.currentMachineState);
-
-    if (currentLine.line === 0) {
-        currentLine.line = currentLine.line + 1;
-    } else {
-        cmEditor.setCursor(currentLine);
-        currentLine.line = currentLine.line + 1;
-    }
-
-    fsFormat("what is the current line number Step forward - %A")(function (x) {
-        console.log(x);
-    })(currentLine.line);
+    updateMemoryInHTML(exports.currentMachineState);
+    currentLine.line = currentLine.line + 1;
+    cmEditor.setCursor(currentLine);
 }
 executeButton.addEventListener('click', function (_arg1) {
     executeButtonHandler();
@@ -3612,7 +3791,6 @@ stepForwardsButton.addEventListener('click', function (_arg4) {
     return null;
 });
 
-exports.Util = Util;
 exports.editId = editId;
 exports.executeButton = executeButton;
 exports.resetButton = resetButton;
@@ -3624,7 +3802,7 @@ exports.initialValue = initialValue;
 exports.getIDAndUpdateRegisterValue = getIDAndUpdateRegisterValue;
 exports.updateRegisterValuesInHTML = updateRegisterValuesInHTML;
 exports.updateProgramCounterInHTML = updateProgramCounterInHTML;
-exports.printLogAndUpdateRegisters = printLogAndUpdateRegisters;
+exports.updateMemoryInHTML = updateMemoryInHTML;
 exports.setCurrentMachineState = setCurrentMachineState;
 exports.fail = fail$$1;
 exports.eachLineProcessing = eachLineProcessing;
@@ -3634,7 +3812,6 @@ exports.resetButtonHandler = resetButtonHandler;
 exports.stepBackwardsButtonHandler = stepBackwardsButtonHandler;
 exports.stepForwardsButtonHandler = stepForwardsButtonHandler;
 
-
-})(this);
+}((this.files = this.files || {})));
 
 //# sourceMappingURL=bundle.js.map

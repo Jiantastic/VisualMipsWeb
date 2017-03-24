@@ -1,3 +1,5 @@
+// NOTES: extended CodeMirror APIs to support functionality that I require
+
 module App.CodeMirrorImports
 
 open System

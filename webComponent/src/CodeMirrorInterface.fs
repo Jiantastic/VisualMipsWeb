@@ -1,4 +1,6 @@
-﻿module App.CodeMirrorInterface
+﻿// NOTES : extended functionality for syntax highlighting, custom CodeMirror theme
+
+module App.CodeMirrorInterface
 
 open Fable.Core
 open Fable.Core.JsInterop
@@ -94,7 +96,7 @@ let tokFunction  (stream:CodeMirrorStream)  (state:obj) =
     let ret = 
         match stream with 
         | EatSpace _ -> "var2"
-        | EatMatch "^(ADDI|ADDIU|ANDI|ORI|XORI|BEQ|BGEZAL|BGEZ|BGTZ|BLEZ|BLTZAL|BLTZ|BNE|LB|LBU|LH|LWL|LW|LWR|SB|SH|SW|LUI|SLTI|SLTIU|JAL|J|ADDU|ADD|AND|OR|SRAV|SRA|SRLV|SRL|SLLV|SLL|SUBU|SUB|XOR|SLTU|SLT|DIVU|DIV|MULTU|MULT|JR|JALR|MFHI|MFLO|MTHI|MTLO)" _ -> "keyword"
+        | EatMatch "^(ADDIU|ADDI|ANDI|ORI|XORI|BEQ|BGEZAL|BGEZ|BGTZ|BLEZ|BLTZAL|BLTZ|BNE|LB|LBU|LH|LWL|LW|LWR|SB|SH|SW|LUI|SLTI|SLTIU|JAL|J|ADDU|ADD|AND|OR|SRAV|SRA|SRLV|SRL|SLLV|SLL|SUBU|SUB|XOR|SLTU|SLT|DIVU|DIV|MULTU|MULT|JR|JALR|MFHI|MFLO|MTHI|MTLO)" _ -> "keyword"
         | EatMatch "^[a-zA-Z][a-zA-Z0-9]*" _ -> "atom"
         | EatMatch "^#" (EatLine x) -> "comment"
         | EatMatch "^[0-9][0-9]*" _ -> "number"
