@@ -3,7 +3,7 @@
 
 Project: Online MIPS1 Instruction Set Emulator
 
-Developed with F# and FABLE
+Developed with F# and FABLE. F# code in ./webComponent/src
 
 Electron version in electronFiles
 
