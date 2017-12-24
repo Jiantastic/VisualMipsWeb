@@ -11,6 +11,7 @@ Web version in WebComponent
 
 Website -> https://visualmips.github.io/
 
+The rest of the source code is located here -> https://github.com/VisualMIPS
 
 To compile, 
 
